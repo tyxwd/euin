@@ -3,7 +3,7 @@ export default {
   language: {
     selectLanguage: '选择语言'
   },
-teamLogo: {
+  teamLogo: {
     title: '团队标识',
     subtitle: '我们的团队与合作伙伴',
     items: [
@@ -40,12 +40,28 @@ teamLogo: {
     title: '结果',
     healthy: '健康',
     subHealthy: '亚健康',
-    ill: '生病',
+    ill: '疾病',
     predictedType: '预测类型',
     confidence: '置信度',
     noData: '暂无数据',
     success: '成功',
-    failure: '失败'
+    failure: '失败',
+    // 新增定量计算相关
+    compoundName: '化合物名称',
+    concentration: '浓度',
+    calculationDetails: '计算详情',
+    intensity1: '强度1',
+    intensity2: '强度2',
+    intensityRatio: '强度比值',
+    formula: '计算公式',
+    formulaParams: '公式参数',
+    qualityInfo: '质量控制信息',
+    dataValidation: '数据验证',
+    totalRows: '文件总行数',
+    minRequiredRows: '最小要求行数',
+    passed: '通过',
+    failed: '失败',
+    unit: '单位'
   },
 
   tip: {
@@ -104,7 +120,12 @@ teamLogo: {
     defaultFile: '默认文件',
     unknownFile: '未知文件',
     fileName: '文件名',
-    fileFormat: '文件格式'
+    fileFormat: '文件格式',
+    calcMethod: '计算方法',
+    calcModel: '使用模型',
+    // 新增定量计算相关
+    compoundType: '化合物类型',
+    totalRows: '文件总行数'
   },
 
   common: {
@@ -117,7 +138,6 @@ teamLogo: {
     less: '更少'
   },
 
-  // 新增团队介绍相关关键词
   teamIntro: {
     title: '团队介绍',
     subtitle: '专业的数据分析团队，致力于为您提供准确的数据预测服务',
@@ -155,7 +175,6 @@ teamLogo: {
     startButton: '开始使用'
   },
 
-  // 新增状态相关关键词
   status: {
     healthy: '健康',
     subHealthy: '亚健康',
@@ -165,7 +184,6 @@ teamLogo: {
     pending: '待处理'
   },
 
-  // 新增分析相关关键词
   analysis: {
     title: '数据分析',
     startAnalysis: '开始分析',
@@ -176,7 +194,6 @@ teamLogo: {
     accuracy: '准确率'
   },
 
-  // 新增文件操作相关关键词
   fileOperation: {
     selectFile: '选择文件',
     dragAndDrop: '拖拽文件到这里',
@@ -184,5 +201,28 @@ teamLogo: {
     maxFileSize: '最大文件大小',
     fileRequirements: '文件要求',
     processingFile: '正在处理文件'
+  },
+
+  // 计算方法相关翻译
+  method: {
+    type: {
+      title: '计算方法',
+      svm: 'SVM算法',
+      quantitative: '定量计算',
+      tree: '决策树模型'
+    },
+    model: {
+      title: '模型选择',
+      default: '默认模型',
+      retinol: '视黄醇 (Retinol)',
+      vitamin_k: '维生素K (Vitamin K)',
+      vitamin_d: '维生素D (Vitamin D)',
+      carotene: '胡萝卜素 (Carotene)',
+      hu_r: '胡萝卜素和视黄醇混合',
+      hu_vd: '胡萝卜素和VD混合',
+      hu_vd_vk: '胡萝卜素和VD、VK混合',
+      hu_vk: '胡萝卜素和VK混合',
+      vk_r_vd: '视黄醇和VK、VD混合'
+    }
   }
 }

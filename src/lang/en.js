@@ -3,7 +3,7 @@ export default {
   language: {
     selectLanguage: 'Select Language'
   },
-teamLogo: {
+  teamLogo: {
     title: 'Team Logos',
     subtitle: 'Our Team and Partners',
     items: [
@@ -45,7 +45,23 @@ teamLogo: {
     confidence: 'Confidence',
     noData: 'No Data',
     success: 'Success',
-    failure: 'Failure'
+    failure: 'Failure',
+    // 新增定量计算相关
+    compoundName: 'Compound Name',
+    concentration: 'Concentration',
+    calculationDetails: 'Calculation Details',
+    intensity1: 'Intensity 1',
+    intensity2: 'Intensity 2',
+    intensityRatio: 'Intensity Ratio',
+    formula: 'Calculation Formula',
+    formulaParams: 'Formula Parameters',
+    qualityInfo: 'Quality Control Information',
+    dataValidation: 'Data Validation',
+    totalRows: 'Total Rows',
+    minRequiredRows: 'Minimum Required Rows',
+    passed: 'Passed',
+    failed: 'Failed',
+    unit: 'Unit'
   },
 
   tip: {
@@ -104,7 +120,12 @@ teamLogo: {
     defaultFile: 'Default File',
     unknownFile: 'Unknown File',
     fileName: 'File Name',
-    fileFormat: 'File Format'
+    fileFormat: 'File Format',
+    calcMethod: 'Calculation Method',
+    calcModel: 'Used Model',
+    // 新增定量计算相关
+    compoundType: 'Compound Type',
+    totalRows: 'Total Rows'
   },
 
   common: {
@@ -117,7 +138,6 @@ teamLogo: {
     less: 'Less'
   },
 
-  // Team Introduction Related Keywords
   teamIntro: {
     title: 'Team Introduction',
     subtitle: 'Professional data analysis team dedicated to providing accurate data prediction services',
@@ -155,7 +175,6 @@ teamLogo: {
     startButton: 'Get Started'
   },
 
-  // Status Related Keywords
   status: {
     healthy: 'Healthy',
     subHealthy: 'Sub-Healthy',
@@ -165,7 +184,6 @@ teamLogo: {
     pending: 'Pending'
   },
 
-  // Analysis Related Keywords
   analysis: {
     title: 'Data Analysis',
     startAnalysis: 'Start Analysis',
@@ -176,7 +194,6 @@ teamLogo: {
     accuracy: 'Accuracy'
   },
 
-  // File Operation Related Keywords
   fileOperation: {
     selectFile: 'Select File',
     dragAndDrop: 'Drag and drop file here',
@@ -184,5 +201,28 @@ teamLogo: {
     maxFileSize: 'Maximum File Size',
     fileRequirements: 'File Requirements',
     processingFile: 'Processing File'
+  },
+
+  // 计算方法相关翻译
+  method: {
+    type: {
+      title: 'Method',
+      svm: 'SVM Algorithm',
+      quantitative: 'Quantitative Calculation',
+      tree: 'Decision Tree Model'
+    },
+    model: {
+      title: 'Model',
+      default: 'Default',
+      retinol: 'Retinol',
+      vitamin_k: 'Vitamin K',
+      vitamin_d: 'Vitamin D',
+      carotene: 'Carotene',
+      hu_r: 'Carotene & Retinol',
+      hu_vd: 'Carotene & VD',
+      hu_vd_vk: 'Carotene & VD & VK',
+      hu_vk: 'Carotene & VK',
+      vk_r_vd: 'Retinol & VK & VD'
+    }
   }
 }

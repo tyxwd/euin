@@ -41,7 +41,6 @@ export default {
   background: #fff;
   border-radius: 16rpx;
   padding: 40rpx 32rpx;
-  margin-bottom: 30rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
   border: 2rpx solid #f0f0f0;
 }

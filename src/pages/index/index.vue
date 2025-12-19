@@ -10,6 +10,33 @@
     <team-guide v-if="!hasResult"></team-guide>
     <!-- 上传区域 -->
     <view class="upload-section" v-if="!hasResult">
+      <!-- 新增：计算方法选择区域 -->
+      <view class="method-selector">
+        <view class="select-item">
+          <text class="select-label">{{ $t('method.type.title') }}:</text>
+          <picker mode="selector" :range="typeOptions" :range-key="'label'" :model="selectedTypeIndex"
+                  @change="onTypeChange"
+                  style="flex: 1">
+            <view class="picker-display">
+              <text>{{ getTypeLabel(selectedType) }}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="select-item mt-10">
+          <text class="select-label">{{ $t('method.model.title') }}:</text>
+          <picker mode="selector" :range="modelOptions" :range-key="'label'" :model="selectedModelIndex"
+                  @change="onModelChange"
+                  style="flex: 1">
+            <view class="picker-display">
+              <text>{{ getModelLabel(selectedModel) }}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+
       <button class="upload-btn" @click="chooseFile" :disabled="isLoading">{{ $t('action.upload') }}</button>
       <text class="file-name" v-if="fileName">{{ $t('tip.uploadTip') }}: {{ fileName }}</text>
     </view>
@@ -21,65 +48,198 @@
 
     <!-- 结果区域 -->
     <view class="result-section" v-if="hasResult">
-      <!-- 主要预测结果 -->
-      <view class="result-card">
-        <text class="result-title">{{ $t('result.predictedType') }}:</text>
-        <text class="result-text" :class="resultClass">{{ result.predicted_type }}</text>
-      </view>
-
-      <!-- 置信度 -->
-      <view class="result-card mt-20">
-        <text class="result-title">{{ $t('result.confidence') }}:</text>
-        <text class="result-text">{{ (result.confidence * 100).toFixed(2) }}%</text>
-      </view>
-
-      <!-- 数据信息 -->
-      <view class="info-card mt-20">
-        <text class="info-title">{{ $t('dataInfo.title') }}</text>
-        <view class="info-row">
-          <text class="info-label">{{ $t('dataInfo.originalLength') }}:</text>
-          <text class="info-value">{{ result.original_length }} {{ $t('dataInfo.dataPoints') }}</text>
+      <!-- SVM/决策树 结果展示 -->
+      <view v-if="isSvmOrTree">
+        <!-- 主要预测结果 -->
+        <view class="result-card">
+          <text class="result-title">{{ $t('result.predictedType') || '预测类型' }}:</text>
+          <text class="result-text" :class="resultClass">{{ result.predicted_type }}</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">{{ $t('dataInfo.processedLength') }}:</text>
-          <text class="info-value">{{ result.processed_length }} {{ $t('dataInfo.dataPoints') }}</text>
-        </view>
-      </view>
 
-      <!-- 概率分布 -->
-      <view class="probabilities-card mt-20" v-if="probabilities && Object.keys(probabilities).length > 0">
-        <text class="prob-title">{{ $t('probability.title') }}</text>
-        <view class="prob-item" v-for="(prob, className) in probabilities" :key="className">
-          <view class="prob-header">
-            <text class="prob-name">{{ formatClassName(className) }}</text>
-            <text class="prob-percent">{{ (prob * 100).toFixed(2) }}%</text>
+        <!-- 置信度 -->
+        <view class="result-card mt-20" v-if="selectedType==='svm'">
+          <text class="result-title">{{ $t('result.confidence') || '置信度' }}:</text>
+          <text class="result-text">{{ (result.confidence * 100).toFixed(2) }}%</text>
+        </view>
+
+        <!-- 数据信息 -->
+        <view class="info-card mt-20">
+          <text class="info-title">{{ $t('dataInfo.title') || '数据信息' }}</text>
+          <view class="info-row">
+            <text class="info-label">{{ $t('dataInfo.originalLength') || '原始数据长度' }}:</text>
+            <text class="info-value">{{ result.original_length }} {{ $t('dataInfo.dataPoints') || '个数据点' }}</text>
           </view>
-          <view class="prob-bar">
-            <view
-                class="prob-bar-fill"
-                :style="{ width: (prob * 100) + '%' }"
-                :class="getProbBarClass(className)"
-            ></view>
+          <view class="info-row">
+            <text class="info-label">{{ $t('dataInfo.processedLength') || '处理后数据长度' }}:</text>
+            <text class="info-value">{{ result.processed_length }} {{ $t('dataInfo.dataPoints') || '个数据点' }}</text>
           </view>
         </view>
+
+        <!-- 概率分布（扇形 / 条形切换） -->
+        <view
+            class="probabilities-card mt-20"
+            v-if="selectedType === 'svm' && probabilities && Object.keys(probabilities).length > 0"
+        >
+          <view class="prob-header-line">
+            <text class="prob-title">
+              {{ $t('probability.title') || '概率分布' }}
+            </text>
+
+            <view class="chart-switch">
+              <!-- 扇形图图标 -->
+              <view
+                  class="chart-icon"
+                  :class="{ active: chartMode === 'pie' }"
+                  @click.stop="toggleChartMode"
+              >
+                <icon-pie></icon-pie>
+              </view>
+              <!-- 条形图图标 -->
+              <view
+                  class="chart-icon"
+                  :class="{ active: chartMode === 'bar' }"
+                  @click.stop="toggleChartMode"
+              >
+                <icon-bar></icon-bar>
+              </view>
+            </view>
+          </view>
+
+
+          <!-- 图表容器 -->
+          <div v-show="chartMode === 'pie'"
+               class="prob-chart"
+               ref="probChartRef"
+               @click="toggleChartMode"
+          ></div>
+
+          <!-- 条形图（你原来的样式，复用） -->
+          <view v-if="chartMode === 'bar'" class="prob-bar-wrapper">
+            <view class="prob-item" v-for="(prob, className) in probabilities" :key="className">
+              <view class="prob-header">
+                <text class="prob-name">{{ formatClassName(className) }}</text>
+                <text class="prob-percent">{{ (prob * 100).toFixed(2) }}%</text>
+              </view>
+              <view class="prob-bar">
+                <view
+                    class="prob-bar-fill"
+                    :style="{ width: (prob * 100) + '%' }"
+                    :class="getProbBarClass(className)"
+                ></view>
+              </view>
+            </view>
+          </view>
+        </view>
       </view>
 
-      <!-- 文件信息 -->
+      <!-- 定量计算 结果展示 -->
+      <view v-if="isQuantitative">
+        <!-- 化合物名称 -->
+        <view class="result-card">
+          <text class="result-title">{{ $t('result.compoundName') || '化合物名称' }}:</text>
+          <text class="result-text healthy">{{ result.compound_name }}</text>
+        </view>
+
+        <!-- 浓度结果 -->
+        <view class="result-card mt-20">
+          <text class="result-title">{{ $t('result.concentration') || '浓度' }}:</text>
+          <text class="result-text">{{ result.concentration.toFixed(6) }} {{ result.unit }}</text>
+        </view>
+
+        <!-- 计算详情 -->
+        <view class="result-card mt-20" v-if="calculationData">
+          <text class="result-title">{{ $t('result.calculationDetails') || '计算详情' }}:</text>
+          <text class="calc-detail-text">{{ result.calculation_details }}</text>
+
+          <view class="calc-data-section mt-10">
+            <view class="calc-data-row">
+              <text class="calc-data-label">{{ $t('result.intensity1') || '强度1' }}
+                (第{{ calculationData.intensity_1.row_number }}行):
+              </text>
+              <text class="calc-data-value">{{ calculationData.intensity_1.value.toFixed(6) }}</text>
+            </view>
+            <view class="calc-data-row">
+              <text class="calc-data-label">{{ $t('result.intensity2') || '强度2' }}
+                (第{{ calculationData.intensity_2.row_number }}行):
+              </text>
+              <text class="calc-data-value">{{ calculationData.intensity_2.value.toFixed(6) }}</text>
+            </view>
+            <view class="calc-data-row">
+              <text class="calc-data-label">{{ $t('result.intensityRatio') || '强度比值' }} (y):</text>
+              <text class="calc-data-value">{{ calculationData.ratio_y.toFixed(6) }}</text>
+            </view>
+            <view class="calc-data-row">
+              <text class="calc-data-label">{{ $t('result.formula') || '计算公式' }}:</text>
+              <text class="calc-data-value">{{ calculationData.formula_parameters.formula }}</text>
+            </view>
+            <view class="calc-data-row">
+              <text class="calc-data-label">{{ $t('result.formulaParams') || '公式参数' }}:</text>
+              <text class="calc-data-value">a = {{ calculationData.formula_parameters.a }}, b =
+                {{ calculationData.formula_parameters.b }}
+              </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 质量控制信息 -->
+        <view class="info-card mt-20" v-if="qualityInfo">
+          <text class="info-title">{{ $t('result.qualityInfo') || '质量控制信息' }}</text>
+          <view class="info-row">
+            <text class="info-label">{{ $t('result.dataValidation') || '数据验证' }}:</text>
+            <text class="info-value">{{
+                qualityInfo.data_validation === 'passed' ? ($t('result.passed') || '通过') : ($t('result.failed') || '失败')
+              }}
+            </text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">{{ $t('result.totalRows') || '文件总行数' }}:</text>
+            <text class="info-value">{{ qualityInfo.rows_checked }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">{{ $t('result.minRequiredRows') || '最小要求行数' }}:</text>
+            <text class="info-value">{{ qualityInfo.minimum_required }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">{{ $t('result.intensityRatio') || '强度比值' }}:</text>
+            <text class="info-value">{{ qualityInfo.intensity_ratio.toFixed(6) }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 文件信息（通用） -->
       <view class="file-info-card mt-20" v-if="fileInfo">
-        <text class="file-info-title">{{ $t('fileInfo.title') }}</text>
+        <text class="file-info-title">{{ $t('fileInfo.title') || '文件信息' }}</text>
+        <!--        <view class="file-info-row">-->
+        <!--          <text class="file-info-label">{{ $t('fileInfo.usedFile') || '使用文件' }}:</text>-->
+        <!--          <text class="file-info-value">{{ getFileName(fileInfo.used_file) }}</text>-->
+        <!--        </view>-->
         <view class="file-info-row">
-          <text class="file-info-label">{{ $t('fileInfo.usedFile') }}:</text>
-          <text class="file-info-value">{{ getFileName(fileInfo.used_file) }}</text>
-        </view>
-        <view class="file-info-row">
-          <text class="file-info-label">{{ $t('fileInfo.fileType') }}:</text>
+          <text class="file-info-label">{{ $t('fileInfo.fileType') || '文件类型' }}:</text>
           <text class="file-info-value">{{ getFileTypeText(fileInfo.file_type) }}</text>
+        </view>
+        <!-- 定量计算专属文件信息 -->
+        <view class="file-info-row" v-if="isQuantitative && fileInfo.compound_type">
+          <text class="file-info-label">{{ $t('fileInfo.compoundType') || '化合物类型' }}:</text>
+          <text class="file-info-value">{{ getModelLabel(fileInfo.compound_type) }}</text>
+        </view>
+        <view class="file-info-row" v-if="isQuantitative && fileInfo.total_rows">
+          <text class="file-info-label">{{ $t('fileInfo.totalRows') || '文件总行数' }}:</text>
+          <text class="file-info-value">{{ fileInfo.total_rows }}</text>
+        </view>
+        <!-- 计算方法和模型（通用） -->
+        <view class="file-info-row" v-if="result.calc_method">
+          <text class="file-info-label">{{ $t('fileInfo.calcMethod') || '计算方法' }}:</text>
+          <text class="file-info-value">{{ getTypeLabel(result.calc_method) }}</text>
+        </view>
+        <view class="file-info-row" v-if="result.calc_model">
+          <text class="file-info-label">{{ $t('fileInfo.calcModel') || '计算模型' }}:</text>
+          <text class="file-info-value">{{ getModelLabel(result.calc_model) }}</text>
         </view>
       </view>
 
       <!-- 重新分析按钮 -->
       <view class="reanalyze-section mt-20">
-        <button class="reanalyze-btn" @click="resetAnalysis">{{ $t('action.reanalyze') }}</button>
+        <button class="reanalyze-btn" @click="resetAnalysis">{{ $t('action.reanalyze') || '重新分析' }}</button>
       </view>
     </view>
 
@@ -87,7 +247,7 @@
     <view class="language-modal" v-if="showLanguageModal" @click="closeLanguageModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
-          <text class="modal-title">{{ $t('language.selectLanguage') }}</text>
+          <text class="modal-title">{{ $t('language.selectLanguage') || '选择语言' }}</text>
           <text class="modal-close" @click="closeLanguageModal">×</text>
         </view>
         <view class="language-list">
@@ -108,32 +268,44 @@
 </template>
 
 <script>
+import * as echarts from 'echarts'
 import fileTypes from '@/config/fileTypes.js'
+import Settings from "@/config/settings";
+import IconPie from "@/icons/icon-pie.vue";
+import IconBar from "@/icons/icon-bar.vue";
 import TeamGuide from "@/components/TeamGuide.vue";
 import TeamLogoDisplay from "@/components/TeamLogoDisplay.vue";
 import TeamIntro from "@/components/TeamIntro.vue";
 
-// 语言配置：扩展为12种，locale与i18n注册的标识完全一致
 const languageConfig = {
   'en': {name: 'English', locale: 'en'},
   'zh-CN': {name: '中文（简体）', locale: 'zh-CN'},
-  // 'ja': {name: '日本語', locale: 'ja'},
-  // 'ko': {name: '한국어', locale: 'ko'},
-  // 'es': {name: 'Español', locale: 'es'},
-  // 'fr': {name: 'Français', locale: 'fr'},
-  // 'de': {name: 'Deutsch', locale: 'de'},
-  // 'ru': {name: 'Русский', locale: 'ru'},
-  // 'pt-BR': {name: 'Português (Brasil)', locale: 'pt-BR'},
-  // 'ar': {name: 'العربية', locale: 'ar'},
-  // 'it': {name: 'Italiano', locale: 'it'},
-  // 'hi': {name: 'हिन्दी', locale: 'hi'}
+}
+
+// 定量计算模型配置
+const QUANTITATIVE_COMPOUND_CONFIGS = {
+  'retinol': {name: '视黄醇 (Retinol)'},
+  'vitamin_k': {name: '维生素K (Vitamin K)'},
+  'vitamin_d': {name: '维生素D (Vitamin D)'},
+  'carotene': {name: '胡萝卜素 (Carotene)'}
+}
+
+// 决策树模型配置
+const TREE_MODEL_CONFIGS = {
+  "hu_r": {name: "胡萝卜素和视黄醇混合"},
+  "hu_vd": {name: "胡萝卜素和VD混合"},
+  "hu_vd_vk": {name: "胡萝卜素和VD、VK混合"},
+  "hu_vk": {name: "胡萝卜素和VK混合"},
+  "vk_r_vd": {name: "视黄醇和VK、VD混合"}
 }
 
 export default {
   components: {
     TeamGuide,
     TeamIntro,
-    TeamLogoDisplay
+    TeamLogoDisplay,
+    IconPie,
+    IconBar
   },
 
   data() {
@@ -144,11 +316,28 @@ export default {
       probabilities: null,
       fileInfo: null,
       isLoading: false,
-      baseUrl: 'http://43.138.48.175/npj',
+      baseUrl: Settings.baseUrl,
       languageIndex: 0,
       languageOptions: [],
       currentLanguage: {},
-      showLanguageModal: false
+      showLanguageModal: false,
+      // 新增：计算方法相关
+      selectedType: 'svm', // svm / quantitative / tree
+      selectedTypeIndex: 0, // picker索引
+      selectedModel: 'default', // 模型key
+      selectedModelIndex: 0, // 模型picker索引
+      typeOptions: [
+        {value: 'svm', label: this.$t('method.type.svm') || 'SVM算法'},
+        {value: 'quantitative', label: this.$t('method.type.quantitative') || '定量计算'},
+        {value: 'tree', label: this.$t('method.type.tree') || '决策树模型'}
+      ],
+      modelOptions: [], // 动态生成的模型选项
+      // 定量计算专属数据
+      calculation_data: null,
+      quality_info: null,
+
+      chartMode: 'pie',        // pie | bar
+      probChart: null
     }
   },
 
@@ -164,21 +353,54 @@ export default {
     },
     hasResult() {
       return this.result !== null
+    },
+    // 判断是否是SVM/决策树类型
+    isSvmOrTree() {
+      return this.hasResult && ['svm', 'tree'].includes(this.result.calc_method)
+    },
+    // 判断是否是定量计算类型
+    isQuantitative() {
+      return this.hasResult && this.result.calc_method === 'quantitative'
+    },
+    // 快捷访问定量计算数据
+    calculationData() {
+      return this.calculation_data
+    },
+    qualityInfo() {
+      return this.quality_info
     }
   },
 
   onLoad() {
     this.initLanguage()
+    // 初始化模型选项
+    this.updateModelOptions(this.selectedType)
   },
-
+  onUnload() {
+    if (this.probChart) {
+      this.probChart.dispose()
+      this.probChart = null
+    }
+  },
   watch: {
     '$i18n.locale': {
       handler() {
         uni.setNavigationBarTitle({
           title: this.$t('page.title')
         })
+        // 语言切换时更新选择器标签
+        this.updateTypeOptionsI18n()
       },
       immediate: true
+    },
+    selectedType(newVal) {
+      this.updateModelOptions(newVal)
+    },
+    probabilities: {
+      handler() {
+        this.$nextTick(this.renderProbChart)
+      },
+      deep: true
     }
   },
 
@@ -186,7 +408,6 @@ export default {
     // 团队介绍开始按钮点击事件
     onTeamIntroStart() {
       console.log('用户点击开始使用按钮')
-      // 这里可以添加一些动画效果或其他逻辑
     },
 
     // 重置分析
@@ -196,54 +417,48 @@ export default {
       this.fileInfo = null
       this.fileName = ''
       this.fileTempPath = ''
+      this.calculation_data = null
+      this.quality_info = null
+      // 重置计算方法选择
+      this.selectedType = 'svm'
+      this.selectedTypeIndex = 0
+      this.updateModelOptions('svm')
+      this.chartMode = 'pie'
       uni.pageScrollTo({
         scrollTop: 0,
-        duration: 0 // 动画时长（ms）
+        duration: 0
       })
     },
-    // 初始化语言设置（兼容旧数据+系统语言识别）
+
+    // 初始化语言设置
     initLanguage() {
-      // 获取所有12种语言选项
       this.languageOptions = Object.values(languageConfig)
-
-      // 读取本地存储（兼容旧版'zh'→'zh-CN'）
       let savedLang = uni.getStorageSync('preferredLanguage')
-      if (savedLang === 'zh') savedLang = 'zh-CN' // 旧数据迁移
-
-      // 识别系统语言（优先完整匹配，再匹配前缀）
-      // const systemLang = this.getSystemLanguage()
-      // const defaultLang = savedLang || systemLang || 'zh-CN'
+      if (savedLang === 'zh') savedLang = 'zh-CN'
       const defaultLang = 'en'
-
       this.setLanguage(defaultLang)
     },
 
-    // 优化系统语言识别：支持完整标识（如zh-CN）和前缀匹配（如en-US→en）
+    // 优化系统语言识别
     getSystemLanguage() {
       try {
         const systemLang = uni.getSystemInfoSync().language || 'zh-CN'
         const langKeys = Object.keys(languageConfig)
-
-        // 1. 完整匹配（如zh-CN直接命中）
         if (langKeys.includes(systemLang)) return systemLang
-
-        // 2. 前缀匹配（如en-US→en，ja-JP→ja）
         const shortLang = systemLang.split('-')[0]
         const matchedKey = langKeys.find(key => key.startsWith(shortLang))
         return matchedKey || 'zh-CN'
       } catch (e) {
-        return 'zh-CN' // 异常时默认中文
+        return 'zh-CN'
       }
     },
 
-    // 设置语言（同步i18n和本地存储）
+    // 设置语言
     setLanguage(lang) {
       if (languageConfig[lang]) {
-        this.$i18n.locale = lang // 与i18n注册的标识一致
+        this.$i18n.locale = lang
         this.currentLanguage = languageConfig[lang]
-        // 更新选择器索引
         this.languageIndex = this.languageOptions.findIndex(item => item.locale === lang)
-        // 持久化存储
         uni.setStorageSync('preferredLanguage', lang)
       }
     },
@@ -264,56 +479,138 @@ export default {
       this.closeLanguageModal()
     },
 
-    // 选择文件（原有逻辑不变）
+    // 新增：更新计算方法选项的国际化
+    updateTypeOptionsI18n() {
+      this.typeOptions = [
+        {value: 'svm', label: this.$t('method.type.svm') || 'SVM算法'},
+        {value: 'quantitative', label: this.$t('method.type.quantitative') || '定量计算'},
+        {value: 'tree', label: this.$t('method.type.tree') || '决策树模型'}
+      ]
+    },
+
+    // 新增：更新模型选项
+    updateModelOptions(type) {
+      switch (type) {
+        case 'svm':
+          this.modelOptions = [{
+            value: 'default',
+            label: this.$t('method.model.default') || '默认模型'
+          }];
+          break;
+        case 'quantitative':
+          this.modelOptions = Object.entries(QUANTITATIVE_COMPOUND_CONFIGS).map(([key, config]) => ({
+            value: key,
+            label: this.$t(`method.model.${key}`) || config.name
+          }));
+          break;
+        case 'tree':
+          this.modelOptions = Object.entries(TREE_MODEL_CONFIGS).map(([key, config]) => ({
+            value: key,
+            label: this.$t(`method.model.${key}`) || config.name
+          }));
+          break;
+        default:
+          this.modelOptions = [{value: 'default', label: '默认模型'}];
+      }
+      // 重置模型选择为第一个选项
+      this.selectedModel = this.modelOptions[0]?.value || 'default'
+      this.selectedModelIndex = 0
+    },
+
+    // 新增：计算方法选择变化
+    onTypeChange(e) {
+      const index = e.detail.value
+      this.selectedType = this.typeOptions[index].value
+      this.selectedTypeIndex = index
+    },
+
+    // 新增：模型选择变化
+    onModelChange(e) {
+      const index = e.detail.value
+      this.selectedModel = this.modelOptions[index].value
+      this.selectedModelIndex = index
+    },
+
+    // 新增：获取计算方法显示标签
+    getTypeLabel(type) {
+      if (!type) return ''
+      const item = this.typeOptions.find(item => item.value === type)
+      return item?.label || type
+    },
+
+    // 新增：获取模型显示标签
+    getModelLabel(model) {
+      if (!model) return ''
+      if (this.selectedType === 'svm' || (this.result && this.result.calc_method === 'svm')) {
+        return this.$t('method.model.default') || '默认模型'
+      } else if (this.selectedType === 'quantitative' || (this.result && this.result.calc_method === 'quantitative')) {
+        return this.$t(`method.model.${model}`) || QUANTITATIVE_COMPOUND_CONFIGS[model]?.name || model
+      } else if (this.selectedType === 'tree' || (this.result && this.result.calc_method === 'tree')) {
+        return this.$t(`method.model.${model}`) || TREE_MODEL_CONFIGS[model]?.name || model
+      }
+      return model
+    },
+
+    // 选择文件
     chooseFile() {
+      // #ifdef APP-PLUS
+      // APP平台使用 plus.io.pick
+      plus.io.pick({
+        permission: "read",
+        filter: "file",
+        onsuccess: (res) => {
+          const file = res.files[0];
+          this.fileName = file.name;
+          this.fileTempPath = file.path;
+          this.uploadToBackend();
+        },
+        onerror: (err) => {
+          console.error('选择文件失败:', err);
+          uni.showToast({
+            title: this.$t('error.fileChooseFailed') || '选择文件失败',
+            icon: 'none'
+          });
+        }
+      });
+      // #endif
+
+      // #ifdef H5
       uni.chooseFile({
         count: 1,
         type: 'file',
         success: (res) => {
-          const file = res.tempFiles[0]
-          this.fileName = file.name
-          this.fileTempPath = res.tempFilePaths[0]
-
-          if (!this.isAllowedFileType(file.name)) {
-            uni.showToast({
-              title: this.$t('error.fileTypeError') + file.name.split('.').pop().toLowerCase(),
-              icon: 'none',
-              duration: 2000
-            })
-            return
-          }
-
-          this.uploadToBackend()
+          const file = res.tempFiles[0];
+          this.fileName = file.name;
+          this.fileTempPath = res.tempFilePaths[0];
+          this.uploadToBackend();
         },
         fail: (err) => {
-          console.error('选择文件失败:', err)
-          uni.showToast({
-            title: this.$t('error.chooseFileError'),
-            icon: 'none',
-            duration: 2000
-          })
+          console.error(err);
+          uni.showToast({title: '选择文件失败', icon: 'none'});
         }
-      })
+      });
+      // #endif
     },
 
-    // 校验文件类型（原有逻辑不变）
+    // 校验文件类型
     isAllowedFileType(fileName) {
       const lowerName = fileName.toLowerCase()
       return fileTypes.textFiles?.includes('.txt') || lowerName.endsWith('.txt')
     },
 
-    // 上传文件到后端（原有逻辑不变）
+    // 上传文件到后端
     uploadToBackend() {
       this.isLoading = true
       uni.showLoading({
-        title: this.$t('tip.uploading'),
+        title: this.$t('tip.uploading') || '上传中...',
         mask: true
       })
 
-      // 重置之前的结果
       this.result = null
       this.probabilities = null
       this.fileInfo = null
+      this.calculation_data = null
+      this.quality_info = null
 
       uni.uploadFile({
         url: `${this.baseUrl}/upload`,
@@ -330,7 +627,7 @@ export default {
           } catch (e) {
             console.error('上传响应解析失败:', e)
             uni.showToast({
-              title: this.$t('error.uploadParseError'),
+              title: this.$t('error.uploadParseError') || '上传响应解析失败',
               icon: 'none',
               duration: 2000
             })
@@ -340,11 +637,10 @@ export default {
           if (uploadResult.status === 'success' && uploadResult.file_info) {
             const fileInfo = uploadResult.file_info
             const relativePath = `${fileInfo.month_folder}/file/${fileInfo.uuid_filename}`
-            // console.log('上传成功，相对路径:', relativePath)
             this.predictResult(relativePath)
           } else {
             uni.showToast({
-              title: uploadResult.message || this.$t('error.uploadFailed'),
+              title: uploadResult.message || this.$t('error.uploadFailed') || '上传失败',
               icon: 'none',
               duration: 2000
             })
@@ -355,7 +651,7 @@ export default {
           uni.hideLoading()
           console.error('上传文件失败:', err)
           uni.showToast({
-            title: this.$t('error.uploadFailed'),
+            title: this.$t('error.uploadFailed') || '上传失败',
             icon: 'none',
             duration: 2000
           })
@@ -363,11 +659,12 @@ export default {
       })
     },
 
-    // 调用预测接口（原有逻辑不变）
+    // 调用预测接口（新增type_和model参数）
     predictResult(relativePath) {
       this.isLoading = true
+      this.chartMode = 'pie'
       uni.showLoading({
-        title: this.$t('tip.predicting'),
+        title: this.$t('tip.predicting') || '分析中...',
         mask: true
       })
 
@@ -375,7 +672,9 @@ export default {
         url: `${this.baseUrl}/predict_custom`,
         method: 'POST',
         data: {
-          file_path: relativePath
+          file_path: relativePath,
+          type_: this.selectedType, // 新增计算方法类型
+          model: this.selectedModel // 新增模型选择
         },
         header: {
           'Content-Type': 'application/json'
@@ -386,15 +685,18 @@ export default {
           const predictResult = predictRes.data
 
           if (predictResult.status === 'success') {
-            // 分别存储不同类型的数据
             this.result = predictResult.result
+            // 保存定量计算的额外数据
+            this.calculation_data = predictResult.calculation_data || null
+            this.quality_info = predictResult.quality_info || null
             this.probabilities = predictResult.probabilities || {}
             this.fileInfo = predictResult.file_info || {}
-
-            // console.log('完整预测结果:', predictResult)
+            // 记录使用的计算方法和模型（用于前端判断展示类型）
+            this.result.calc_method = this.selectedType
+            this.result.calc_model = this.selectedModel
           } else {
             uni.showToast({
-              title: predictResult.message || this.$t('error.predictFailed'),
+              title: predictResult.message || this.$t('error.predictFailed') || '分析失败',
               icon: 'none',
               duration: 2000
             })
@@ -405,7 +707,7 @@ export default {
           uni.hideLoading()
           console.error('预测接口调用失败:', err)
           uni.showToast({
-            title: this.$t('error.predictFailed'),
+            title: this.$t('error.predictFailed') || '分析失败',
             icon: 'none',
             duration: 2000
           })
@@ -413,19 +715,19 @@ export default {
       })
     },
 
-    // 格式化类别名称 - 使用翻译（原有逻辑不变）
+    // 格式化类别名称
     formatClassName(className) {
       const name = className.replace('prob_', '')
       const nameMap = {
-        'VitaminD3': this.$t('probability.vitaminD3'),
-        'VitaminK3': this.$t('probability.vitaminK3'),
-        'retinol': this.$t('probability.retinol'),
-        'β-carotene': this.$t('probability.betaCarotene')
+        'VitaminD3': this.$t('probability.vitaminD3') || '维生素D3',
+        'VitaminK3': this.$t('probability.vitaminK3') || '维生素K3',
+        'retinol': this.$t('probability.retinol') || '视黄醇',
+        'β-carotene': this.$t('probability.betaCarotene') || 'β-胡萝卜素'
       }
       return nameMap[name] || name
     },
 
-    // 获取概率条样式类（原有逻辑不变）
+    // 获取概率条样式类
     getProbBarClass(className) {
       const name = className.replace('prob_', '')
       const classMap = {
@@ -437,15 +739,58 @@ export default {
       return classMap[name] || 'default-bar'
     },
 
-    // 获取文件名（从完整路径中提取）（原有逻辑不变）
+    // 获取文件名
     getFileName(fullPath) {
-      return fullPath ? fullPath.split('/').pop() : this.$t('fileInfo.unknownFile')
+      return fullPath ? fullPath.split('/').pop() : this.$t('fileInfo.unknownFile') || '未知文件'
     },
 
-    // 获取文件类型显示文本 - 使用翻译（原有逻辑不变）
+    // 获取文件类型显示文本
     getFileTypeText(fileType) {
-      return fileType === 'custom' ? this.$t('fileInfo.customFile') : this.$t('fileInfo.defaultFile')
-    }
+      return fileType === 'custom' ? (this.$t('fileInfo.customFile') || '自定义文件') : (this.$t('fileInfo.defaultFile') || '默认文件')
+    },
+
+    toggleChartMode() {
+      this.chartMode = this.chartMode === 'pie' ? 'bar' : 'pie'
+      this.$nextTick(this.renderProbChart)
+    },
+
+    getProbChartData() {
+      return Object.entries(this.probabilities).map(([key, value]) => ({
+        name: this.formatClassName(key),
+        value: +(value * 100).toFixed(2)
+      }))
+    },
+
+    renderProbChart() {
+      if (!this.$refs.probChartRef) return
+
+      this.probChart = echarts.init(this.$refs.probChartRef)
+
+      if (this.chartMode === 'pie') {
+        this.probChart.setOption({
+          tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}%'
+          },
+          series: [
+            {
+              type: 'pie',
+              // radius: ['40%', '70%'],
+              radius: '55%',
+              data: this.getProbChartData(),
+              label: {
+                formatter: '{b}\n{c}%',
+                fontSize: 12,
+                overflow: 'break',
+                width: 80
+              }
+            }
+          ]
+        })
+      } else {
+        this.probChart = null
+      }
+    },
   }
 }
 </script>
@@ -466,6 +811,53 @@ export default {
   width: 100%;
   padding: 40rpx 0 0;
   text-align: center;
+}
+
+/* 新增：计算方法选择器样式 */
+.method-selector {
+  width: 100%;
+  margin-bottom: 30rpx;
+}
+
+.select-item {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.select-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  width: 120rpx;
+  text-align: left;
+}
+
+.picker-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  padding: 10rpx 15rpx;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 8rpx;
+  background-color: #f9f9f9;
+}
+
+.picker-display text:first-child {
+  font-size: 28rpx;
+  color: #333;
+  text-align: left;
+  flex: 1;
+}
+
+.mt-10 {
+  margin-top: 10rpx;
 }
 
 .upload-btn {
@@ -769,6 +1161,39 @@ export default {
   font-weight: bold;
 }
 
+/* 定量分析计算详情样式 */
+.calc-detail-text {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  margin-top: 10rpx;
+  display: block;
+}
+
+.calc-data-section {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.calc-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.calc-data-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.calc-data-value {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
 /* 响应式设计 */
 @media (max-width: 320px) {
   .container {
@@ -807,11 +1232,82 @@ export default {
   .language-name {
     font-size: 28rpx;
   }
+
+  .select-label {
+    font-size: 26rpx;
+    width: 120rpx;
+  }
+
+  .picker-display text:first-child {
+    font-size: 26rpx;
+  }
+
+  .calc-detail-text {
+    font-size: 26rpx;
+  }
+
+  .calc-data-label, .calc-data-value {
+    font-size: 24rpx;
+  }
 }
 
 .reanalyze-btn {
   background-color: #2f83e5;
   color: #fff;
+  border: none;
+  border-radius: 12rpx;
+  height: 80rpx;
+  font-size: 32rpx;
+  padding: 0 40rpx;
+  width: 100%;
 }
 
+.reanalyze-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.prob-chart {
+  width: 100%;
+  height: 320rpx;
+}
+
+.prob-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.view-hint {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.prob-bar-wrapper {
+  margin-top: 20rpx;
+}
+
+.chart-switch {
+  display: flex;
+  gap: 12rpx;
+}
+
+.chart-icon {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  color: #999;
+  background: #f5f5f5;
+  transition: all 0.2s;
+}
+
+.chart-icon.active {
+  color: #fff;
+  background: #4c7ef3;
+}
 </style>
