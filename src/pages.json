@@ -3,13 +3,13 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "Health Status Detection"
+        "navigationBarTitleText": "LipoSERS"
       }
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "Health Status Detection",
+    "navigationBarTitleText": "LipoSERS",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
   }

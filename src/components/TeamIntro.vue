@@ -36,25 +36,25 @@
       </view>
 
       <!-- 核心成员 -->
-      <view class="intro-card">
-        <view class="card-header">
-          <text class="card-icon">👥</text>
-          <text class="card-title">{{ $t('teamIntro.team.title') }}</text>
-        </view>
-        <view class="team-grid">
-          <view
-            class="team-member"
-            v-for="member in teamMembers"
-            :key="member.name"
-          >
-            <text class="member-avatar">{{ member.avatar }}</text>
-            <view class="member-info">
-              <text class="member-name">{{ member.name }}</text>
-              <text class="member-role">{{ member.role }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+<!--      <view class="intro-card">-->
+<!--        <view class="card-header">-->
+<!--          <text class="card-icon">👥</text>-->
+<!--          <text class="card-title">{{ $t('teamIntro.team.title') }}</text>-->
+<!--        </view>-->
+<!--        <view class="team-grid">-->
+<!--          <view-->
+<!--            class="team-member"-->
+<!--            v-for="member in teamMembers"-->
+<!--            :key="member.name"-->
+<!--          >-->
+<!--            <text class="member-avatar">{{ member.avatar }}</text>-->
+<!--            <view class="member-info">-->
+<!--              <text class="member-name">{{ member.name }}</text>-->
+<!--              <text class="member-role">{{ member.role }}</text>-->
+<!--            </view>-->
+<!--          </view>-->
+<!--        </view>-->
+<!--      </view>-->
     </view>
   </view>
 </template>

@@ -62,6 +62,45 @@
           <text class="result-text">{{ (result.confidence * 100).toFixed(2) }}%</text>
         </view>
 
+        <!--        &lt;!&ndash; 四分类饼图展示 &ndash;&gt;-->
+        <!--        <view class="four-category-pie mt-20" v-if="probabilities && Object.keys(probabilities).length >= 4">-->
+        <!--          <view class="section-header">-->
+        <!--            <text class="section-title">{{ $t('result.categoryDistribution') || '分类分布' }}</text>-->
+        <!--          </view>-->
+
+        <!--          <view class="pie-chart-container">-->
+        <!--            &lt;!&ndash; 饼图 &ndash;&gt;-->
+        <!--            <view class="pie-wrapper" :style="{ width: pieSize + 'px', height: pieSize + 'px' }">-->
+        <!--              <view class="pie-chart" :style="pieStyle">-->
+        <!--                <view class="pie-center">-->
+        <!--                  <text class="pie-total">总计</text>-->
+        <!--                  <text class="pie-total-value">100%</text>-->
+        <!--                </view>-->
+        <!--              </view>-->
+        <!--            </view>-->
+
+        <!--            &lt;!&ndash; 图例 &ndash;&gt;-->
+        <!--            <view class="pie-legend">-->
+        <!--              <view-->
+        <!--                class="legend-item"-->
+        <!--                v-for="(category, index) in pieCategories"-->
+        <!--                :key="index"-->
+        <!--                @click="toggleLegend(index)"-->
+        <!--                :class="{ 'active': activeLegend === index }"-->
+        <!--              >-->
+        <!--                <view class="legend-info">-->
+        <!--                  <view class="legend-color" :style="{ backgroundColor: category.color }"></view>-->
+        <!--                  <view class="legend-details">-->
+        <!--                    <text class="legend-name">{{ category.name }}</text>-->
+        <!--                    <text class="legend-percentage">{{ category.percentage }}%</text>-->
+        <!--                  </view>-->
+        <!--                </view>-->
+        <!--                <text class="legend-angle">{{ category.angle }}°</text>-->
+        <!--              </view>-->
+        <!--            </view>-->
+        <!--          </view>-->
+        <!--        </view>-->
+
         <!-- 数据信息 -->
         <view class="info-card mt-20">
           <text class="info-title">{{ $t('dataInfo.title') || '数据信息' }}</text>
@@ -105,13 +144,41 @@
             </view>
           </view>
 
-
           <!-- 图表容器 -->
-          <div v-show="chartMode === 'pie'"
+          <div v-if="chartMode === 'pie'"
                class="prob-chart"
-               ref="probChartRef"
-               @click="toggleChartMode"
-          ></div>
+          >
+            <view class="pie-chart-container">
+              <!-- 饼图 -->
+              <view class="pie-wrapper" :style="{ width: pieSize + 'px', height: pieSize + 'px' }">
+                <view class="pie-chart" :style="pieStyle">
+                  <view class="pie-center">
+                    <!--                  <text class="pie-total">总计</text>-->
+                    <!--                  <text class="pie-total-value">100%</text>-->
+                  </view>
+                </view>
+              </view>
+
+              <!-- 图例 -->
+              <view class="pie-legend">
+                <view
+                    class="legend-item"
+                    v-for="(category, index) in pieCategories"
+                    :key="index"
+                    :class="{ 'active': activeLegend === index }"
+                >
+                  <view class="legend-info">
+                    <view class="legend-color" :style="{ backgroundColor: category.color }"></view>
+                    <view class="legend-details">
+                      <text class="legend-name">{{ category.name }}</text>
+                      <!--                      <text class="legend-percentage">{{ category.percentage }}%</text>-->
+                    </view>
+                  </view>
+                  <text class="legend-angle">{{ category.percentage }}%</text>
+                </view>
+              </view>
+            </view>
+          </div>
 
           <!-- 条形图（你原来的样式，复用） -->
           <view v-if="chartMode === 'bar'" class="prob-bar-wrapper">
@@ -124,7 +191,7 @@
                 <view
                     class="prob-bar-fill"
                     :style="{ width: (prob * 100) + '%' }"
-                    :class="getProbBarClass(className)"
+                    :class="getColorClass(className)"
                 ></view>
               </view>
             </view>
@@ -209,10 +276,6 @@
       <!-- 文件信息（通用） -->
       <view class="file-info-card mt-20" v-if="fileInfo">
         <text class="file-info-title">{{ $t('fileInfo.title') || '文件信息' }}</text>
-        <!--        <view class="file-info-row">-->
-        <!--          <text class="file-info-label">{{ $t('fileInfo.usedFile') || '使用文件' }}:</text>-->
-        <!--          <text class="file-info-value">{{ getFileName(fileInfo.used_file) }}</text>-->
-        <!--        </view>-->
         <view class="file-info-row">
           <text class="file-info-label">{{ $t('fileInfo.fileType') || '文件类型' }}:</text>
           <text class="file-info-value">{{ getFileTypeText(fileInfo.file_type) }}</text>
@@ -276,18 +339,34 @@ import IconBar from "@/icons/icon-bar.vue";
 import TeamGuide from "@/components/TeamGuide.vue";
 import TeamLogoDisplay from "@/components/TeamLogoDisplay.vue";
 import TeamIntro from "@/components/TeamIntro.vue";
+import {sleep} from "@/utils";
 
 const languageConfig = {
   'en': {name: 'English', locale: 'en'},
   'zh-CN': {name: '中文（简体）', locale: 'zh-CN'},
 }
 
+// SVM模型配置
+const SVM_MODEL_CONFIGS = {
+  'default': {name: '默认模型'},
+  'brca': {name: 'BRCA模型'},
+  'brca_mix': {name: 'BRCA混合模型'},
+  'p': {name: 'P模型'},
+  'p_mix': {name: 'P混合模型'},
+  'hpv': {name: 'HPV模型'}
+}
+
 // 定量计算模型配置
 const QUANTITATIVE_COMPOUND_CONFIGS = {
-  'retinol': {name: '视黄醇 (Retinol)'},
-  'vitamin_k': {name: '维生素K (Vitamin K)'},
-  'vitamin_d': {name: '维生素D (Vitamin D)'},
-  'carotene': {name: '胡萝卜素 (Carotene)'}
+  'retinol': {name: '视黄醇'},
+  'vitamin_k': {name: '维生素K'},
+  'vitamin_d': {name: '维生素D'},
+  'carotene': {name: '胡萝卜素'},
+  'brca1_mt': {name: 'BRCA1突变型'},
+  'brca1_wt': {name: 'BRCA1野生型'},
+  'p16': {name: 'p16蛋白'},
+  'p21': {name: 'p21蛋白'},
+  'p53': {name: 'p53蛋白'}
 }
 
 // 决策树模型配置
@@ -297,6 +376,14 @@ const TREE_MODEL_CONFIGS = {
   "hu_vd_vk": {name: "胡萝卜素和VD、VK混合"},
   "hu_vk": {name: "胡萝卜素和VK混合"},
   "vk_r_vd": {name: "视黄醇和VK、VD混合"}
+}
+
+// 四分类颜色配置
+const FOUR_CATEGORY_COLORS = {
+  'β-carotene': '#FF6B6B',      // 红色
+  'retinol': '#4e63cd',         // 青色
+  'VitaminD3': '#FFD166',       // 黄色
+  'VitaminK3': '#06D6A0'        // 绿色
 }
 
 export default {
@@ -337,7 +424,12 @@ export default {
       quality_info: null,
 
       chartMode: 'pie',        // pie | bar
-      probChart: null
+      probChart: null,
+
+      // 新增：四分类饼图相关数据
+      pieSize: 120,            // 饼图大小
+      activeLegend: null,      // 当前选中的图例
+      pieAnimation: false      // 饼图动画开关
     }
   },
 
@@ -368,6 +460,79 @@ export default {
     },
     qualityInfo() {
       return this.quality_info
+    },
+
+    // 新增：四分类饼图相关计算属性
+    pieCategories() {
+      // 四分类显示名称映射
+      const CATEGORY_NAME_MAP = {
+        'VitaminD3': this.$t('probability.vitaminD3') || '维生素D3',
+        'VitaminK3': this.$t('probability.vitaminK3') || '维生素K3',
+        'retinol': this.$t('probability.retinol') || '视黄醇',
+        'β-carotene': this.$t('probability.betaCarotene') || 'β-胡萝卜素'
+      }
+
+      if (!this.probabilities || Object.keys(this.probabilities).length < 4) {
+        return []
+      }
+
+      const categories = []
+      let currentAngle = 0
+
+      // 确保按照固定的顺序显示
+      const categoryOrder = ['β-carotene', 'retinol', 'VitaminD3', 'VitaminK3']
+
+      categoryOrder.forEach(categoryKey => {
+        const probability = this.probabilities[`prob_${categoryKey}`] || 0
+        const percentage = (probability * 100).toFixed(2)
+        const angle = (probability * 360).toFixed(0)
+
+        categories.push({
+          name: CATEGORY_NAME_MAP[categoryKey] || categoryKey,
+          value: probability,
+          percentage: percentage,
+          angle: angle,
+          color: FOUR_CATEGORY_COLORS[categoryKey] || '#CCCCCC',
+          // 这里暂时不设置 startAngle 和 endAngle，后面会重新计算
+        })
+      })
+
+      // 按照 percentage 从大到小排序
+      categories.sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+
+      // 重新计算扇形角度
+      categories.forEach(category => {
+        const angle = parseFloat(category.angle)
+        category.startAngle = currentAngle
+        category.endAngle = currentAngle + angle
+        currentAngle += angle
+      })
+
+      return categories
+    },
+
+    pieStyle() {
+      if (this.pieCategories.length === 0) {
+        return {}
+      }
+
+      let gradient = ''
+      this.pieCategories.forEach((category, index) => {
+        const startAngle = category.startAngle
+        const endAngle = category.endAngle
+
+        if (index === 0) {
+          gradient += `${category.color} ${startAngle}deg ${endAngle}deg`
+        } else {
+          gradient += `, ${category.color} ${startAngle}deg ${endAngle}deg`
+        }
+      })
+
+      return {
+        background: `conic-gradient(${gradient})`,
+        transform: this.pieAnimation ? 'rotate(360deg)' : 'rotate(0deg)',
+        transition: this.pieAnimation ? 'transform 20s linear' : 'none'
+      }
     }
   },
 
@@ -376,12 +541,14 @@ export default {
     // 初始化模型选项
     this.updateModelOptions(this.selectedType)
   },
+
   onUnload() {
     if (this.probChart) {
       this.probChart.dispose()
       this.probChart = null
     }
   },
+
   watch: {
     '$i18n.locale': {
       handler() {
@@ -396,11 +563,11 @@ export default {
     selectedType(newVal) {
       this.updateModelOptions(newVal)
     },
-    probabilities: {
-      handler() {
-        this.$nextTick(this.renderProbChart)
-      },
-      deep: true
+    probabilities(newVal) {
+      if (newVal && Object.keys(newVal).length >= 4) {
+        // 当有概率数据时，可以添加一些初始化逻辑
+        this.calculatePieData()
+      }
     }
   },
 
@@ -424,10 +591,25 @@ export default {
       this.selectedTypeIndex = 0
       this.updateModelOptions('svm')
       this.chartMode = 'pie'
+      // 重置饼图数据
+      this.activeLegend = null
+      this.pieAnimation = false
+
       uni.pageScrollTo({
         scrollTop: 0,
         duration: 0
       })
+    },
+
+    // 新增：计算饼图数据
+    calculatePieData() {
+      // 数据已经在计算属性中处理
+      // 这里可以添加其他处理逻辑
+    },
+
+    // 新增：切换饼图动画
+    togglePieAnimation() {
+      this.pieAnimation = !this.pieAnimation
     },
 
     // 初始化语言设置
@@ -488,14 +670,14 @@ export default {
       ]
     },
 
-    // 新增：更新模型选项
+    // 更新模型选项
     updateModelOptions(type) {
       switch (type) {
         case 'svm':
-          this.modelOptions = [{
-            value: 'default',
-            label: this.$t('method.model.default') || '默认模型'
-          }];
+          this.modelOptions = Object.entries(SVM_MODEL_CONFIGS).map(([key, config]) => ({
+            value: key,
+            label: this.$t(`method.model.${key}`) || config.name
+          }));
           break;
         case 'quantitative':
           this.modelOptions = Object.entries(QUANTITATIVE_COMPOUND_CONFIGS).map(([key, config]) => ({
@@ -524,7 +706,7 @@ export default {
       this.selectedTypeIndex = index
     },
 
-    // 新增：模型选择变化
+    // 模型选择变化
     onModelChange(e) {
       const index = e.detail.value
       this.selectedModel = this.modelOptions[index].value
@@ -538,43 +720,28 @@ export default {
       return item?.label || type
     },
 
-    // 新增：获取模型显示标签
+    // 获取模型显示标签
     getModelLabel(model) {
-      if (!model) return ''
-      if (this.selectedType === 'svm' || (this.result && this.result.calc_method === 'svm')) {
-        return this.$t('method.model.default') || '默认模型'
-      } else if (this.selectedType === 'quantitative' || (this.result && this.result.calc_method === 'quantitative')) {
-        return this.$t(`method.model.${model}`) || QUANTITATIVE_COMPOUND_CONFIGS[model]?.name || model
-      } else if (this.selectedType === 'tree' || (this.result && this.result.calc_method === 'tree')) {
-        return this.$t(`method.model.${model}`) || TREE_MODEL_CONFIGS[model]?.name || model
+      if (!model) return '';
+
+      // 根据当前选择的类型或者结果中的类型来获取正确的配置
+      const currentType = this.selectedType || (this.result && this.result.calc_method);
+
+      switch (currentType) {
+        case 'svm':
+          return this.$t(`method.model.${model}`) || SVM_MODEL_CONFIGS[model]?.name || model;
+        case 'quantitative':
+          return this.$t(`method.model.${model}`) || QUANTITATIVE_COMPOUND_CONFIGS[model]?.name || model;
+        case 'tree':
+          return this.$t(`method.model.${model}`) || TREE_MODEL_CONFIGS[model]?.name || model;
+        default:
+          return model;
       }
-      return model
     },
 
-    // 选择文件
     chooseFile() {
-      // #ifdef APP-PLUS
-      // APP平台使用 plus.io.pick
-      plus.io.pick({
-        permission: "read",
-        filter: "file",
-        onsuccess: (res) => {
-          const file = res.files[0];
-          this.fileName = file.name;
-          this.fileTempPath = file.path;
-          this.uploadToBackend();
-        },
-        onerror: (err) => {
-          console.error('选择文件失败:', err);
-          uni.showToast({
-            title: this.$t('error.fileChooseFailed') || '选择文件失败',
-            icon: 'none'
-          });
-        }
-      });
-      // #endif
-
       // #ifdef H5
+      // H5方案：使用input元素
       uni.chooseFile({
         count: 1,
         type: 'file',
@@ -590,6 +757,104 @@ export default {
         }
       });
       // #endif
+
+      // #ifdef APP-PLUS
+      // APP方案：使用原生能力（兼容所有旧版本）
+      this.openNativeFileChooser();
+      // #endif
+    },
+
+    // ========== APP端：原生文件选择 ==========
+    openNativeFileChooser() {
+      const main = plus.android.runtimeMainActivity();
+      const Intent = plus.android.importClass('android.content.Intent');
+
+      const intent = new Intent(Intent.ACTION_GET_CONTENT);
+      intent.setType("*/*"); // 所有文件类型（可限定为text/plain）
+      intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+      // 选择文件后的回调
+      main.onActivityResult = (requestCode, resultCode, data) => {
+        console.log("requestCode:", requestCode, "resultCode:", resultCode);
+        if (requestCode === 100 && resultCode === -1 && data) { // -1 = RESULT_OK
+          const uri = data.getData();
+          this.readTxtFileByUriForAndroid10(uri);
+        }
+      };
+
+      main.startActivityForResult(intent, 100);
+    },
+
+    // ========== 适配Android 10+：通过URI直接读取（无需真实路径） ==========
+    readTxtFileByUriForAndroid10(uri) {
+      try {
+        const main = plus.android.runtimeMainActivity();
+        // 1. 获取ContentResolver对象（必须通过plus.android.invoke）
+        const contentResolver = main.getContentResolver();
+        if (!contentResolver) {
+          console.error('【Android10+】获取ContentResolver失败');
+          return;
+        }
+
+        // 2. 调用openInputStream（关键：用plus.android.invoke执行原生方法）
+        let inputStream = null;
+        try {
+          inputStream = plus.android.invoke(contentResolver, 'openInputStream', uri);
+        } catch (e) {
+          console.error('【Android10+】调用openInputStream失败：', e);
+          return;
+        }
+
+        // 3. 读取输入流内容（原生IO操作）
+        const InputStreamReader = plus.android.importClass('java.io.InputStreamReader');
+        const BufferedReader = plus.android.importClass('java.io.BufferedReader');
+        const isr = new InputStreamReader(inputStream, 'utf-8');
+        const br = new BufferedReader(isr);
+
+        let line = '';
+        let txtContent = '';
+        // 逐行读取（readLine也需用invoke，避免直接调用）
+        while (true) {
+          line = plus.android.invoke(br, 'readLine');
+          if (line === null) break;
+          txtContent += line + '\n';
+        }
+
+        // 4. 关闭流（必须关闭，避免内存泄漏）
+        plus.android.invoke(br, 'close');
+        plus.android.invoke(isr, 'close');
+        plus.android.invoke(inputStream, 'close');
+
+        // console.log('【Android10+】通过URI读取TXT内容：', txtContent);
+        this.fileName = this.getFileNameFromUri(uri); // 从URI解析文件名
+        // console.log(this.fileName)
+        this.uploadToBackend(txtContent);
+
+      } catch (error) {
+        console.error('【Android10+】URI读取TXT失败：', error);
+      }
+    },
+
+    getFileNameFromUri(uri) {
+      try {
+        const main = plus.android.runtimeMainActivity();
+        const contentResolver = main.getContentResolver();
+        const Cursor = plus.android.importClass('android.database.Cursor');
+        const DisplayName = plus.android.importClass('android.provider.OpenableColumns').DISPLAY_NAME;
+
+        // 查询文件名
+        const cursor = plus.android.invoke(contentResolver, 'query', uri, [DisplayName], null, null, null);
+        let fileName = '未知文件.txt';
+        if (cursor && plus.android.invoke(cursor, 'moveToFirst')) {
+          const index = plus.android.invoke(cursor, 'getColumnIndex', DisplayName);
+          fileName = plus.android.invoke(cursor, 'getString', index);
+          plus.android.invoke(cursor, 'close');
+        }
+        return fileName;
+      } catch (e) {
+        console.error('解析文件名失败：', e);
+        return '未知文件.txt';
+      }
     },
 
     // 校验文件类型
@@ -599,7 +864,7 @@ export default {
     },
 
     // 上传文件到后端
-    uploadToBackend() {
+    uploadToBackend(fileDetail = '') {
       this.isLoading = true
       uni.showLoading({
         title: this.$t('tip.uploading') || '上传中...',
@@ -617,6 +882,9 @@ export default {
         filePath: this.fileTempPath,
         name: 'file',
         fileType: 'text',
+        formData: {
+          fileDetail: fileDetail,
+        },
         success: (uploadRes) => {
           this.isLoading = false
           uni.hideLoading()
@@ -694,6 +962,10 @@ export default {
             // 记录使用的计算方法和模型（用于前端判断展示类型）
             this.result.calc_method = this.selectedType
             this.result.calc_model = this.selectedModel
+            if (this.selectedType === 'svm') {
+              this.chartMode = 'bar'
+              this.toggleChartMode()
+            }
           } else {
             uni.showToast({
               title: predictResult.message || this.$t('error.predictFailed') || '分析失败',
@@ -739,6 +1011,17 @@ export default {
       return classMap[name] || 'default-bar'
     },
 
+    getColorClass(className) {
+      const name = className.replace('prob_', '')
+      const classMap = {
+        'β-carotene': 'carotene-bar',
+        'VitaminD3': 'd3-bar',
+        'VitaminK3': 'k3-bar',
+        'retinol': 'retinol-bar'
+      }
+      return classMap[name] || 'default-bar'
+    },
+
     // 获取文件名
     getFileName(fullPath) {
       return fullPath ? fullPath.split('/').pop() : this.$t('fileInfo.unknownFile') || '未知文件'
@@ -762,34 +1045,36 @@ export default {
     },
 
     renderProbChart() {
-      if (!this.$refs.probChartRef) return
+      sleep().then(() => {
+        console.log(this.$refs.probChartRef)
+        if (!this.$refs.probChartRef) return
 
-      this.probChart = echarts.init(this.$refs.probChartRef)
+        this.probChart = echarts.init(this.$refs.probChartRef)
 
-      if (this.chartMode === 'pie') {
-        this.probChart.setOption({
-          tooltip: {
-            trigger: 'item',
-            formatter: '{b}: {c}%'
-          },
-          series: [
-            {
-              type: 'pie',
-              // radius: ['40%', '70%'],
-              radius: '55%',
-              data: this.getProbChartData(),
-              label: {
-                formatter: '{b}\n{c}%',
-                fontSize: 12,
-                overflow: 'break',
-                width: 80
+        if (this.chartMode === 'pie') {
+          this.probChart.setOption({
+            tooltip: {
+              trigger: 'item',
+              formatter: '{b}: {c}%'
+            },
+            series: [
+              {
+                type: 'pie',
+                radius: '55%',
+                data: this.getProbChartData(),
+                label: {
+                  formatter: '{b}\n{c}%',
+                  fontSize: 12,
+                  overflow: 'break',
+                  width: 80
+                }
               }
-            }
-          ]
-        })
-      } else {
-        this.probChart = null
-      }
+            ]
+          })
+        } else {
+          this.probChart = null
+        }
+      })
     },
   }
 }
@@ -937,6 +1222,138 @@ export default {
   color: #F44336;
 }
 
+/* 四分类饼图样式 */
+.four-category-pie {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 36rpx 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.pie-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.pie-wrapper {
+  position: relative;
+  border-radius: 50%;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%;
+  height: 20%;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.pie-total {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.pie-total-value {
+  font-size: 32rpx;
+  color: #2c3e50;
+  font-weight: bold;
+  margin-top: 5rpx;
+}
+
+.pie-legend {
+  width: 320rpx;
+}
+
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rpx;
+  margin-bottom: 6rpx;
+  border-radius: 12rpx;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  border: 2rpx solid transparent;
+  font-size: 12px;
+}
+
+.legend-item.active {
+  border-color: #3498db;
+  background-color: #e8f4fc;
+  transform: translateX(5rpx);
+}
+
+.legend-item:active {
+  opacity: 0.8;
+}
+
+.legend-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.legend-color {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+}
+
+.legend-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 3rpx;
+}
+
+.legend-percentage {
+  font-size: 24rpx;
+  color: #7f8c8d;
+}
+
+.legend-angle {
+  font-size: 26rpx;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
 /* 信息卡片样式 */
 .info-title, .prob-title, .file-info-title {
   font-size: 32rpx;
@@ -999,6 +1416,22 @@ export default {
   height: 100%;
   border-radius: 6rpx;
   transition: width 0.5s ease-in-out;
+}
+
+.carotene-bar {
+  background: linear-gradient(90deg, #FF6B6B, #FF6B6B);
+}
+
+.k3-bar {
+  background: linear-gradient(90deg, #06D6A0, #06D6A0);
+}
+
+.d3-bar {
+  background: linear-gradient(90deg, #FFD166, #FFD166);
+}
+
+.retinol-bar {
+  background: linear-gradient(90deg, #4e63cd, #4e63cd);
 }
 
 .healthy-bar {
@@ -1249,6 +1682,24 @@ export default {
   .calc-data-label, .calc-data-value {
     font-size: 24rpx;
   }
+
+  /* 饼图响应式调整 */
+  .pie-wrapper {
+    width: 180rpx !important;
+    height: 180rpx !important;
+  }
+
+  .legend-name {
+    font-size: 26rpx;
+  }
+
+  .legend-percentage {
+    font-size: 22rpx;
+  }
+
+  .legend-angle {
+    font-size: 24rpx;
+  }
 }
 
 .reanalyze-btn {
@@ -1269,7 +1720,8 @@ export default {
 
 .prob-chart {
   width: 100%;
-  height: 320rpx;
+  //height: 320rpx;
+  //min-height: 160px;
 }
 
 .prob-header-line {
