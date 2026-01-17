@@ -53,7 +53,7 @@
         <!-- 主要预测结果 -->
         <view class="result-card">
           <text class="result-title">{{ $t('result.predictedType') || '预测类型' }}:</text>
-          <text class="result-text" :class="resultClass">{{ result.predicted_type }}</text>
+          <text class="result-text" :class="resultClass">{{ predictedTypeLabel }}</text>
         </view>
 
         <!-- 置信度 -->
@@ -190,8 +190,7 @@
               <view class="prob-bar">
                 <view
                     class="prob-bar-fill"
-                    :style="{ width: (prob * 100) + '%' }"
-                    :class="getColorClass(className)"
+                    :style="{ width: (prob * 100) + '%', backgroundColor: getColor(className) }"
                 ></view>
               </view>
             </view>
@@ -383,8 +382,29 @@ const FOUR_CATEGORY_COLORS = {
   'β-carotene': '#FF6B6B',      // 红色
   'retinol': '#4e63cd',         // 青色
   'VitaminD3': '#FFD166',       // 黄色
-  'VitaminK3': '#06D6A0'        // 绿色
+  'VitaminK3': '#06D6A0',       // 绿色
+  // BRCA相关颜色配置
+  'BRCA1-MT': '#FF6B6B',       // 红色
+  'BRCA1-MT-S': '#4e63cd',     // 青色
+  'BRCA1-WT': '#FFD166',       // 黄色
+  'BRCA1-WT-S': '#06D6A0',     // 绿色
+  // BRCA混合模型比例颜色配置
+  '10:01': '#06D6A0',          // 绿色 (高WT比例)
+  '5:01': '#FFD166',           // 黄色 (中等WT比例)
+  '1:01': '#9C88FF',           // 橙色 (平衡比例)
+  '1:05': '#FF8C00',           // 深橙色 (中等MT比例)
+  '1:10': '#FF6B6B',           // 红色 (高MT比例)
+  // HPV相关颜色配置
+  'HPV16 Clinical Sample': '#FF6B6B',  // 红色
+  'HPV18 Clinical Sample': '#4e63cd'   // 青色
 }
+
+// 扩展颜色配置，用于更多类别
+const EXTENDED_COLORS = [
+  '#FF6B6B', '#4e63cd', '#FFD166', '#06D6A0',
+  '#FF8E53', '#9C88FF', '#FFC75F', '#FF6B9D',
+  '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
+]
 
 export default {
   components: {
@@ -436,8 +456,9 @@ export default {
   computed: {
     resultClass() {
       const type = this.result?.predicted_type || ''
-      if (['β-carotene', 'VitaminD3', '健康类型1'].includes(type)) return 'healthy'
-      if (['retinol', '亚健康类型1'].includes(type)) return 'sub-healthy'
+      if (['β-carotene', 'VitaminD3', '健康类型1', 'BRCA1-WT', 'BRCA1-WT-S', '10:01', '5:01'].includes(type)) return 'healthy'
+      if (['retinol', '亚健康类型1', '1:01'].includes(type)) return 'sub-healthy'
+      if (['BRCA1-MT', 'BRCA1-MT-S', '1:05', '1:10'].includes(type)) return 'ill'
       return 'ill'
     },
     isH5() {
@@ -464,35 +485,35 @@ export default {
 
     // 新增：四分类饼图相关计算属性
     pieCategories() {
-      // 四分类显示名称映射
-      const CATEGORY_NAME_MAP = {
-        'VitaminD3': this.$t('probability.vitaminD3') || '维生素D3',
-        'VitaminK3': this.$t('probability.vitaminK3') || '维生素K3',
-        'retinol': this.$t('probability.retinol') || '视黄醇',
-        'β-carotene': this.$t('probability.betaCarotene') || 'β-胡萝卜素'
-      }
-
-      if (!this.probabilities || Object.keys(this.probabilities).length < 4) {
+      if (!this.probabilities || Object.keys(this.probabilities).length === 0) {
         return []
       }
 
       const categories = []
       let currentAngle = 0
 
-      // 确保按照固定的顺序显示
-      const categoryOrder = ['β-carotene', 'retinol', 'VitaminD3', 'VitaminK3']
-
-      categoryOrder.forEach(categoryKey => {
-        const probability = this.probabilities[`prob_${categoryKey}`] || 0
+      // 从probabilities中提取所有prob_开头的键，并去掉prob_前缀
+      const probKeys = Object.keys(this.probabilities).filter(key => key.startsWith('prob_'))
+      
+      probKeys.forEach((probKey, index) => {
+        const categoryKey = probKey.replace('prob_', '')
+        const probability = this.probabilities[probKey] || 0
         const percentage = (probability * 100).toFixed(2)
         const angle = (probability * 360).toFixed(0)
 
+        // 获取显示名称：优先使用i18n翻译，否则使用类别键
+        const displayName = this.$t(`probability.${categoryKey}`) || categoryKey
+        // const displayName = this.$t(`probability.${categoryKey}`) || categoryKey
+
+        // 获取颜色：优先使用固定颜色映射，否则使用扩展颜色数组
+        const color = FOUR_CATEGORY_COLORS[categoryKey] || EXTENDED_COLORS[index % EXTENDED_COLORS.length]
+
         categories.push({
-          name: CATEGORY_NAME_MAP[categoryKey] || categoryKey,
+          name: displayName,
           value: probability,
           percentage: percentage,
           angle: angle,
-          color: FOUR_CATEGORY_COLORS[categoryKey] || '#CCCCCC',
+          color: color,
           // 这里暂时不设置 startAngle 和 endAngle，后面会重新计算
         })
       })
@@ -533,6 +554,12 @@ export default {
         transform: this.pieAnimation ? 'rotate(360deg)' : 'rotate(0deg)',
         transition: this.pieAnimation ? 'transform 20s linear' : 'none'
       }
+    },
+
+    // 新增：获取预测类型的中文描述
+    predictedTypeLabel() {
+      const type = this.result?.predicted_type || ''
+      return this.$t(`result.predictedTypes.${type}`, type)
     }
   },
 
@@ -587,10 +614,10 @@ export default {
       this.calculation_data = null
       this.quality_info = null
       // 重置计算方法选择
-      this.selectedType = 'svm'
-      this.selectedTypeIndex = 0
-      this.updateModelOptions('svm')
-      this.chartMode = 'pie'
+      // this.selectedType = 'svm'
+      // this.selectedTypeIndex = 0
+      // this.updateModelOptions('svm')
+      // this.chartMode = 'pie'
       // 重置饼图数据
       this.activeLegend = null
       this.pieAnimation = false
@@ -994,7 +1021,21 @@ export default {
         'VitaminD3': this.$t('probability.vitaminD3') || '维生素D3',
         'VitaminK3': this.$t('probability.vitaminK3') || '维生素K3',
         'retinol': this.$t('probability.retinol') || '视黄醇',
-        'β-carotene': this.$t('probability.betaCarotene') || 'β-胡萝卜素'
+        'β-carotene': this.$t('probability.betaCarotene') || 'β-胡萝卜素',
+        // BRCA相关映射
+        'BRCA1-MT': this.$t('probability.BRCA1-MT') || '水中含有BRCA1-MT',
+        'BRCA1-MT-S': this.$t('probability.BRCA1-MT-S') || '血清中含有BRCA1-MT',
+        'BRCA1-WT': this.$t('probability.BRCA1-WT') || '水中含有BRCA1-WT',
+        'BRCA1-WT-S': this.$t('probability.BRCA1-WT-S') || '血清中含有BRCA1-WT',
+        // BRCA混合模型比例映射
+        '10:01': this.$t('probability.10:01') || 'BRCA1-WT：BRCA1-MT=10:1',
+        '5:01': this.$t('probability.5:01') || 'BRCA1-WT：BRCA1-MT=5:1',
+        '1:01': this.$t('probability.1:01') || 'BRCA1-WT：BRCA1-MT=1:1',
+        '1:05': this.$t('probability.1:05') || 'BRCA1-WT：BRCA1-MT=1:5',
+        '1:10': this.$t('probability.1:10') || 'BRCA1-WT：BRCA1-MT=1:10',
+        // HPV相关映射
+        'HPV16 Clinical Sample': this.$t('probability.HPV16 Clinical Sample') || 'HPV16 临床样本',
+        'HPV18 Clinical Sample': this.$t('probability.HPV18 Clinical Sample') || 'HPV18 临床样本'
       }
       return nameMap[name] || name
     },
@@ -1006,7 +1047,21 @@ export default {
         'β-carotene': 'healthy-bar',
         'VitaminD3': 'healthy-bar',
         'VitaminK3': 'sub-healthy-bar',
-        'retinol': 'ill-bar'
+        'retinol': 'ill-bar',
+        // BRCA相关映射
+        'BRCA1-WT': 'healthy-bar',
+        'BRCA1-WT-S': 'healthy-bar',
+        'BRCA1-MT': 'ill-bar',
+        'BRCA1-MT-S': 'ill-bar',
+        // BRCA混合模型比例映射
+        '10:01': 'healthy-bar',
+        '5:01': 'healthy-bar',
+        '1:01': 'sub-healthy-bar',
+        '1:05': 'ill-bar',
+        '1:10': 'ill-bar',
+        // HPV相关映射
+        'HPV16 Clinical Sample': 'ill-bar',
+        'HPV18 Clinical Sample': 'ill-bar'
       }
       return classMap[name] || 'default-bar'
     },
@@ -1017,9 +1072,33 @@ export default {
         'β-carotene': 'carotene-bar',
         'VitaminD3': 'd3-bar',
         'VitaminK3': 'k3-bar',
-        'retinol': 'retinol-bar'
+        'retinol': 'retinol-bar',
+        // BRCA相关映射 - 使用默认颜色
+        'BRCA1-MT': 'brca-mt-bar',
+        'BRCA1-MT-S': 'brca-mt-s-bar',
+        'BRCA1-WT': 'brca-wt-bar',
+        'BRCA1-WT-S': 'brca-wt-s-bar',
+        // BRCA混合模型比例映射
+        '10:01': 'brca-10-1-bar',
+        '5:01': 'brca-5-1-bar',
+        '1:01': 'brca-1-1-bar',
+        '1:05': 'brca-1-5-bar',
+        '1:10': 'brca-1-10-bar'
       }
       return classMap[name] || 'default-bar'
+    },
+
+    // 获取类别颜色（用于柱形图）
+    getColor(className) {
+      const name = className.replace('prob_', '')
+      // 优先使用固定颜色映射
+      if (FOUR_CATEGORY_COLORS[name]) {
+        return FOUR_CATEGORY_COLORS[name]
+      }
+      // 对于其他类别，使用扩展颜色数组
+      const allCategories = Object.keys(this.probabilities || {}).filter(key => key.startsWith('prob_'))
+      const index = allCategories.indexOf(className)
+      return EXTENDED_COLORS[index % EXTENDED_COLORS.length]
     },
 
     // 获取文件名

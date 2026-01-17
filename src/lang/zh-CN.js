@@ -61,7 +61,32 @@ export default {
         minRequiredRows: '最小要求行数',
         passed: '通过',
         failed: '失败',
-        unit: '单位'
+        unit: '单位',
+        // 新增predicted_type映射
+        predictedTypes: {
+            'BRCA1-MT': '水中含有BRCA1-MT',
+            'BRCA1-MT-S': '血清中含有BRCA1-MT',
+            'BRCA1-WT': '水中含有BRCA1-WT',
+            'BRCA1-WT-S': '血清中含有BRCA1-WT',
+            // BRCA混合模型比例映射
+            '10:01': 'BRCA1-WT：BRCA1-MT=10:1',
+            '5:01': 'BRCA1-WT：BRCA1-MT=5:1',
+            '1:01': 'BRCA1-WT：BRCA1-MT=1:1',
+            '1:05': 'BRCA1-WT：BRCA1-MT=1:5',
+            '1:10': 'BRCA1-WT：BRCA1-MT=1:10',
+            // P模型映射
+            'p16': '水中含有p16',
+            'p16-S': '血清中含有p16',
+            'p21': '水中含有p21',
+            'p21-S': '血清中含有p21',
+            'p53': '水中含有p53',
+            'p53-S': '血清中含有p53',
+            // P混合模型比例映射
+            '1:01:01': 'p16：p21：p53=1:1:1',
+            '1:01:02': 'p16：p21：p53=1:1:2',
+            '1:02:01': 'p16：p21：p53=1:2:1',
+            '2:01:01': 'p16：p21：p53=2:1:1'
+        }
     },
 
     tip: {
@@ -109,7 +134,33 @@ export default {
         vitaminD3: '维生素D3',
         vitaminK3: '维生素K3',
         retinol: '视黄醇',
-        betaCarotene: 'β-胡萝卜素'
+        betaCarotene: 'β-胡萝卜素',
+        // BRCA相关映射
+        'BRCA1-MT': '水中含有BRCA1-MT',
+        'BRCA1-MT-S': '血清中含有BRCA1-MT',
+        'BRCA1-WT': '水中含有BRCA1-WT',
+        'BRCA1-WT-S': '血清中含有BRCA1-WT',
+        // BRCA混合模型比例映射
+        '10:01': 'BRCA1-WT：BRCA1-MT=10:1',
+        '5:01': 'BRCA1-WT：BRCA1-MT=5:1',
+        '1:01': 'BRCA1-WT：BRCA1-MT=1:1',
+        '1:05': 'BRCA1-WT：BRCA1-MT=1:5',
+        '1:10': 'BRCA1-WT：BRCA1-MT=1:10',
+        // P模型映射
+        'p16': '水中含有p16',
+        'p16-S': '血清中含有p16',
+        'p21': '水中含有p21',
+        'p21-S': '血清中含有p21',
+        'p53': '水中含有p53',
+        'p53-S': '血清中含有p53',
+        // P混合模型比例映射
+        '1:01:01': 'p16：p21：p53=1:1:1',
+        '1:01:02': 'p16：p21：p53=1:1:2',
+        '1:02:01': 'p16：p21：p53=1:2:1',
+        '2:01:01': 'p16：p21：p53=2:1:1',
+        // 宫颈样本
+        'HPV18 Clinical Sample': 'HPV18 临床样本',
+        'HPV16 Clinical Sample': 'HPV16 临床样本'
     },
 
     fileInfo: {

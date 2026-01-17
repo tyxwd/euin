@@ -61,7 +61,32 @@ export default {
         minRequiredRows: 'Minimum Required Rows',
         passed: 'Passed',
         failed: 'Failed',
-        unit: 'Unit'
+        unit: 'Unit',
+        // 新增predicted_type映射
+        predictedTypes: {
+            'BRCA1-MT': 'BRCA1-MT in Water',
+            'BRCA1-MT-S': 'BRCA1-MT in Serum',
+            'BRCA1-WT': 'BRCA1-WT in Water',
+            'BRCA1-WT-S': 'BRCA1-WT in Serum',
+            // BRCA mix model ratio mappings
+            '10:01': 'BRCA1-WT:BRCA1-MT=10:1',
+            '5:01': 'BRCA1-WT:BRCA1-MT=5:1',
+            '1:01': 'BRCA1-WT:BRCA1-MT=1:1',
+            '1:05': 'BRCA1-WT:BRCA1-MT=1:5',
+            '1:10': 'BRCA1-WT:BRCA1-MT=1:10',
+            // P model mappings
+            'p16': 'p16 in Water',
+            'p16-S': 'p16 in Serum',
+            'p21': 'p21 in Water',
+            'p21-S': 'p21 in Serum',
+            'p53': 'p53 in Water',
+            'p53-S': 'p53 in Serum',
+            // P mix model ratio mappings
+            '1:01:01': 'p16:p21:p53=1:1:1',
+            '1:01:02': 'p16:p21:p53=1:1:2',
+            '1:02:01': 'p16:p21:p53=1:2:1',
+            '2:01:01': 'p16:p21:p53=2:1:1'
+        }
     },
 
     tip: {
@@ -109,7 +134,32 @@ export default {
         vitaminD3: 'Vitamin D3',
         vitaminK3: 'Vitamin K3',
         retinol: 'Retinol',
-        betaCarotene: 'β-Carotene'
+        betaCarotene: 'β-Carotene',
+        // BRCA related mappings
+        'BRCA1-MT': 'BRCA1-MT in Water',
+        'BRCA1-MT-S': 'BRCA1-MT in Serum',
+        'BRCA1-WT': 'BRCA1-WT in Water',
+        'BRCA1-WT-S': 'BRCA1-WT in Serum',
+        // BRCA mix model ratio mappings
+        '10:01': 'BRCA1-WT:BRCA1-MT=10:1',
+        '5:01': 'BRCA1-WT:BRCA1-MT=5:1',
+        '1:01': 'BRCA1-WT:BRCA1-MT=1:1',
+        '1:05': 'BRCA1-WT:BRCA1-MT=1:5',
+        '1:10': 'BRCA1-WT:BRCA1-MT=1:10',
+        // P model mappings
+        'p16': 'p16 in Water',
+        'p16-S': 'p16 in Serum',
+        'p21': 'p21 in Water',
+        'p21-S': 'p21 in Serum',
+        'p53': 'p53 in Water',
+        'p53-S': 'p53 in Serum',
+        // P mix model ratio mappings
+        '1:01:01': 'p16:p21:p53=1:1:1',
+        '1:01:02': 'p16:p21:p53=1:1:2',
+        '1:02:01': 'p16:p21:p53=1:2:1',
+        '2:01:01': 'p16:p21:p53=2:1:1',
+        'HPV18 Clinical Sample': 'HPV18 Clinical Sample',
+        'HPV16 Clinical Sample': 'HPV16 Clinical Sample'
     },
 
     fileInfo: {
