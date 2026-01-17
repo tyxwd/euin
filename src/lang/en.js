@@ -1,3 +1,5 @@
+import {SITE} from "@/config/settings";
+
 // 英文 - English
 export default {
     language: {
@@ -114,7 +116,7 @@ export default {
     },
 
     page: {
-        title: 'LipoSERS',
+        title: SITE,
         home: 'Home',
         about: 'About',
         settings: 'Settings'

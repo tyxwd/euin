@@ -1,3 +1,5 @@
+import {SITE} from "@/config/settings";
+
 // 中文（简体）- Chinese (Simplified)
 export default {
     language: {
@@ -114,7 +116,7 @@ export default {
     },
 
     page: {
-        title: 'LipoSERS',
+        title: SITE,
         home: '首页',
         about: '关于',
         settings: '设置'
