@@ -1,6 +1,6 @@
 {
     "name" : "DNAnalyst",
-    "appid" : "__UNI__54BAF0B",
+    "appid" : "__UNI__F2BB2A8",
     "description" : "",
     "versionName" : "1.0.0",
     "versionCode" : 1,
@@ -76,5 +76,6 @@
         "enable" : false
     },
     "vueVersion" : "3",
-    "locale" : "en"
+    "locale" : "en",
+    "fallbackLocale" : "zh-Hans"
 }

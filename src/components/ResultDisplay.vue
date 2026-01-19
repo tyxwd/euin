@@ -58,13 +58,13 @@
         <view class="calc-data-section mt-10">
           <view class="calc-data-row">
             <text class="calc-data-label">{{ $t('result.intensity1') || '强度1' }}
-              (第{{ calculationData.intensity_1.row_number }}行):
+              ({{ $t('result.rowNumPrefix') }}{{ calculationData.intensity_1.row_number }}{{ $t('result.rowNumSuffix') }}):
             </text>
             <text class="calc-data-value">{{ calculationData.intensity_1.value.toFixed(6) }}</text>
           </view>
           <view class="calc-data-row">
             <text class="calc-data-label">{{ $t('result.intensity2') || '强度2' }}
-              (第{{ calculationData.intensity_2.row_number }}行):
+              ({{ $t('result.rowNumPrefix') }}{{ calculationData.intensity_2.row_number }}{{ $t('result.rowNumSuffix') }}):
             </text>
             <text class="calc-data-value">{{ calculationData.intensity_2.value.toFixed(6) }}</text>
           </view>

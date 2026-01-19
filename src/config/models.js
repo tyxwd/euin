@@ -41,9 +41,9 @@ export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
             return {
                 'brca1_mt': {name: 'BRCA1突变型'},
                 'brca1_wt': {name: 'BRCA1野生型'},
-                'p16': {name: 'p16蛋白'},
-                'p21': {name: 'p21蛋白'},
-                'p53': {name: 'p53蛋白'}
+                'p16': {name: 'p16'},
+                'p21': {name: 'p21'},
+                'p53': {name: 'p53'}
             };
     }
 })();
