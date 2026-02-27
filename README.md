@@ -334,15 +334,3 @@ npm run build:custom
 
 - **科学实验室**: 开放科学研究与技术创新支持
 - **分析团队**: 数据可视化与智能分析
-
-## 📞 联系我们
-
-如有问题或建议，请通过以下方式联系：
-
-- 项目地址: [GitHub Repository]
-- 邮箱: [your-email@example.com]
-
----
-
-**LipoSERS** - 让生物医学数据分析变得简单而强大！ 🚀</content>
-<parameter name="filePath">d:\WebstormProjects\euin01\README.md
