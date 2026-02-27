@@ -44,24 +44,25 @@
     </view>
 
     <!-- 团队介绍组件 -->
-    <team-intro :show="!hasResult" @start="onTeamIntroStart" />
+    <team-intro :show="!hasResult" @start="onTeamIntroStart"/>
 
     <team-logo-display v-if="!hasResult"></team-logo-display>
 
     <!-- 结果展示组件 -->
     <result-display
-      :has-result="hasResult"
-      :is-svm-or-tree="isSvmOrTree"
-      :is-quantitative="isQuantitative"
-      :result="result"
-      :probabilities="probabilities"
-      :calculation-data="calculationData"
-      :quality-info="qualityInfo"
-      :file-info="fileInfo"
-      :selected-type="selectedType"
-      :chart-mode="chartMode"
-      @reanalyze="handleResetAnalysis"
-      @toggle-chart="toggleChartMode"
+        :key="displayKey"
+        :has-result="hasResult"
+        :is-svm-or-tree="isSvmOrTree"
+        :is-quantitative="isQuantitative"
+        :result="result"
+        :probabilities="probabilities"
+        :calculation-data="calculationData"
+        :quality-info="qualityInfo"
+        :file-info="fileInfo"
+        :selected-type="selectedType"
+        :chart-mode="chartMode"
+        @reanalyze="handleResetAnalysis"
+        @toggle-chart="toggleChartMode"
     />
 
     <!-- 自定义语言选择模态框 -->
@@ -93,8 +94,8 @@ import TeamGuide from "@/components/TeamGuide.vue";
 import TeamIntro from "@/components/TeamIntro.vue";
 import TeamLogoDisplay from "@/components/TeamLogoDisplay.vue";
 import ResultDisplay from "@/components/ResultDisplay.vue";
-import { languageMixin, modelMixin } from "@/mixins";
-import { useFileHandler } from "@/composables/useFileHandler";
+import {languageMixin, modelMixin} from "@/mixins";
+import {useFileHandler} from "@/composables/useFileHandler";
 
 export default {
   name: 'Index',
@@ -132,7 +133,8 @@ export default {
   },
   data() {
     return {
-      chartMode: 'pie'
+      chartMode: 'pie',
+      displayKey: 0,
     }
   },
   computed: {
@@ -170,6 +172,7 @@ export default {
     handleResetAnalysis() {
       this.resetAnalysis()
       this.chartMode = 'pie'
+      this.displayKey += 1
     },
     toggleChartMode() {
       this.chartMode = this.chartMode === 'pie' ? 'bar' : 'pie'

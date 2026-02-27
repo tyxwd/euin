@@ -163,7 +163,11 @@ export default {
         '1:02:01': 'p16:p21:p53=1:2:1',
         '2:01:01': 'p16:p21:p53=2:1:1',
         'HPV18 Clinical Sample': 'HPV18 Clinical Sample',
-        'HPV16 Clinical Sample': 'HPV16 Clinical Sample'
+        'HPV16 Clinical Sample': 'HPV16 Clinical Sample',
+        'Acetone': 'Acetone',
+        'Formaldehyde': 'Formaldehyde',
+        'Styrene': 'Styrene',
+        'Xylene': 'Xylene'
     },
 
     fileInfo: {
@@ -273,6 +277,7 @@ export default {
             "p": "P Model",
             "p_mix": "P Mix Model",
             "hpv": "HPV Model",
+            "gzb": "GZB Model",
             "retinol": "Retinol",
             "vitamin_k": "Vitamin K",
             "vitamin_d": "Vitamin D",

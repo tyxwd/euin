@@ -1,4 +1,4 @@
-import {SITE1, SITE2, SITE} from "@/config/settings";
+import {SITE1, SITE2, SITE3, SITE} from "@/config/settings";
 
 
 // 语言配置
@@ -20,7 +20,12 @@ export const SVM_MODEL_CONFIGS = (() => {
                 'brca_mix': {name: 'BRCA混合模型'},
                 'p': {name: 'P模型'},
                 'p_mix': {name: 'P混合模型'},
-                'hpv': {name: 'HPV模型'}
+                'hpv': {name: 'HPV模型'},
+                'gzb': {name: 'GZB模型'}
+            };
+        case SITE3:
+            return {
+                'gzb': {name: 'GZB模型'}
             };
         default:
             return {'default': {name: '未知模型'}};
@@ -45,6 +50,8 @@ export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
                 'p21': {name: 'p21'},
                 'p53': {name: 'p53'}
             };
+        case SITE3:
+            return {};
     }
 })();
 
@@ -100,6 +107,10 @@ export const CALCULATION_TYPES = (() => {
                 {value: 'svm', label: 'method.type.svm'},
                 {value: 'quantitative', label: 'method.type.quantitative'}
             ]
+        case SITE3:
+            return [
+                {value: 'svm', label: 'method.type.svm'}
+            ]
     }
 })();
 // 类别名称映射配置
@@ -118,12 +129,16 @@ export const CLASS_NAME_MAPPINGS = {
     '1:05': 'probability.1:05',
     '1:10': 'probability.1:10',
     'HPV16 Clinical Sample': 'probability.HPV16 Clinical Sample',
-    'HPV18 Clinical Sample': 'probability.HPV18 Clinical Sample'
+    'HPV18 Clinical Sample': 'probability.HPV18 Clinical Sample',
+    'Acetone':'probability.Acetone',
+    'Formaldehyde':'probability.Formaldehyde',
+    'Styrene':'probability.Styrene',
+    'Xylene':'probability.Xylene'
 }
 
 // 结果类别映射
 export const RESULT_CLASSES = {
     healthy: ['β-carotene', 'VitaminD3', '健康类型1', 'BRCA1-WT', 'BRCA1-WT-S', '10:01', '5:01'],
     subHealthy: ['retinol', '亚健康类型1', '1:01'],
-    ill: ['BRCA1-MT', 'BRCA1-MT-S', '1:05', '1:10']
+    ill: ['BRCA1-MT', 'BRCA1-MT-S', '1:05', '1:10', 'Acetone', 'Formaldehyde', 'Styrene', 'Xylene']
 }

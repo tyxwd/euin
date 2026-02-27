@@ -110,24 +110,22 @@ export const useFileHandler = () => {
             const br = new BufferedReader(isr);
 
             let line = '';
-            // --- 优化点 1：使用数组代替字符串变量 ---
-            const contentArray = [];
+            let txtContent = '';
 
+            // This is the heavy part. It will still take time for 50KB,
+            // but the user will see the "Reading content..." spinner now.
             while (true) {
                 line = plus.android.invoke(br, 'readLine');
                 if (line === null) break;
-                // --- 优化点 2：直接 push 进数组 ---
-                contentArray.push(line);
+                txtContent += line + '\n';
             }
 
             plus.android.invoke(br, 'close');
             plus.android.invoke(isr, 'close');
             plus.android.invoke(inputStream, 'close');
 
-            // --- 优化点 3：一次性 join 转换成最终字符串 ---
-            const txtContent = contentArray.join('\n');
-
             fileName.value = getFileNameFromUri(uri);
+
             uploadToBackend(txtContent, selectedType, selectedModel);
 
         } catch (error) {

@@ -164,7 +164,11 @@ export default {
         '2:01:01': 'p16：p21：p53=2:1:1',
         // 宫颈样本
         'HPV18 Clinical Sample': 'HPV18 临床样本',
-        'HPV16 Clinical Sample': 'HPV16 临床样本'
+        'HPV16 Clinical Sample': 'HPV16 临床样本',
+        'Acetone': '丙酮',
+        'Formaldehyde': '甲醛',
+        'Styrene': '苯乙烯',
+        'Xylene': '二甲苯'
     },
 
     fileInfo: {
@@ -278,6 +282,7 @@ export default {
             "p": "P模型",
             "p_mix": "P混合模型",
             "hpv": "HPV模型",
+            "gzb": "GZB模型",
             "brca1_mt": "BRCA1突变型",
             "brca1_wt": "BRCA1野生型",
             "p16": "p16",
