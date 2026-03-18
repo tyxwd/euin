@@ -1,4 +1,4 @@
-import {SITE1, SITE2, SITE3, SITE} from "@/config/settings";
+import {SITE1, SITE2, SITE3, SITE4, SITE5, SITE} from "@/config/settings";
 
 
 // 语言配置
@@ -27,6 +27,18 @@ export const SVM_MODEL_CONFIGS = (() => {
             return {
                 'gzb': {name: 'GZB模型'}
             };
+        case SITE4:
+            return {
+                'han': {name: 'HAN模型'},
+                'lei': {name: 'LEI模型'},
+                'niao': {name: 'NIAO模型'},
+                'shui': {name: 'SHUI模型'},
+                'xueqing': {name: 'XUEQING模型'},
+            };
+        case SITE5:
+            return {
+                'pesticide': {name: 'PESTICIDE模型'},
+            };
         default:
             return {'default': {name: '未知模型'}};
     }
@@ -52,6 +64,17 @@ export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
             };
         case SITE3:
             return {};
+        case SITE4:
+            return {
+                'crp': {name: 'C反应蛋白'},
+                'il': {name: '白细胞介素'},
+                'ua': {name: '尿酸'}
+            };
+        case SITE5:
+            return {
+                fms: {name: '福美双'},
+                sjl: {name: '噻菌灵'}
+            };
     }
 })();
 
@@ -111,6 +134,16 @@ export const CALCULATION_TYPES = (() => {
             return [
                 {value: 'svm', label: 'method.type.svm'}
             ]
+        case SITE4:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'}
+            ]
+        case SITE5:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'}
+            ]
     }
 })();
 // 类别名称映射配置
@@ -130,10 +163,21 @@ export const CLASS_NAME_MAPPINGS = {
     '1:10': 'probability.1:10',
     'HPV16 Clinical Sample': 'probability.HPV16 Clinical Sample',
     'HPV18 Clinical Sample': 'probability.HPV18 Clinical Sample',
-    'Acetone':'probability.Acetone',
-    'Formaldehyde':'probability.Formaldehyde',
-    'Styrene':'probability.Styrene',
-    'Xylene':'probability.Xylene'
+    'Acetone': 'probability.Acetone',
+    'Formaldehyde': 'probability.Formaldehyde',
+    'Styrene': 'probability.Styrene',
+    'Xylene': 'probability.Xylene',
+    'CR': 'probability.CR',
+    'CRP': 'probability.CRP',
+    'IL-6': 'probability.IL-6',
+    'LA': 'probability.LA',
+    'PCT': 'probability.PCT',
+    'UA': 'probability.UA',
+    'ACE': 'probability.ACE',
+    'DM': 'probability.DM',
+    'DQ': 'probability.DQ',
+    'TBZ': 'probability.TBZ',
+    'Thiram': 'probability.Thiram'
 }
 
 // 结果类别映射

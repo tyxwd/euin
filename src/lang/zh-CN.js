@@ -168,7 +168,21 @@ export default {
         'Acetone': '丙酮',
         'Formaldehyde': '甲醛',
         'Styrene': '苯乙烯',
-        'Xylene': '二甲苯'
+        'Xylene': '二甲苯',
+
+        // SITE4
+        'CR': 'CR',
+        'CRP': 'CRP',
+        'IL-6': 'IL-6',
+        'LA': 'LA',
+        'PCT': 'PCT',
+        'UA': 'UA',
+        // SITE5
+        'ACE': '乙酰甲胺磷',
+        'DM': '乐果',
+        'DQ': '敌草快',
+        'TBZ': '噻菌灵',
+        'Thiram': '福美双'
     },
 
     fileInfo: {
@@ -292,7 +306,18 @@ export default {
             "hu_vd": "胡萝卜素和VD混合",
             "hu_vd_vk": "胡萝卜素和VD、VK混合",
             "hu_vk": "胡萝卜素和VK混合",
-            "vk_r_vd": "视黄醇和VK、VD混合"
+            "vk_r_vd": "视黄醇和VK、VD混合",
+            'han': '汗液',
+            'lei': '泪液',
+            'niao': '尿液',
+            'shui': '水',
+            'xueqing': '血清',
+            'crp': 'C反应蛋白',
+            'il': '白细胞介素',
+            'ua': '尿酸',
+            'pesticide': '农药',
+            'sjl':'噻菌灵',
+            'fms':'福美双',
         }
     }
 }

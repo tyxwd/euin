@@ -3,7 +3,7 @@
     <!-- SVM/决策树 结果展示 -->
     <view v-if="isSvmOrTree">
       <!-- 主要预测结果 -->
-      <view class="result-card" :class="{ 'alarm-active': isAlarm }">
+      <view class="result-card" :class="{ 'alarm-active': isAlarm&&isVibrationSite }">
         <text class="result-title">{{ $t('result.predictedType') || '预测类型' }}:</text>
         <text class="result-text" :class="resultClass">{{ predictedTypeLabel }}</text>
       </view>
@@ -47,7 +47,10 @@
       <!-- 浓度结果 -->
       <view class="result-card mt-20">
         <text class="result-title">{{ $t('result.concentration') || '浓度' }}:</text>
-        <text class="result-text">{{ result?.concentration?.toFixed(6) }} {{ result?.unit }}</text>
+        <text class="result-text">
+          <span v-html="formatConcentration(result?.concentration)"></span>
+          <text>{{ result?.unit }}</text>
+        </text>
       </view>
 
       <!-- 计算详情 -->
@@ -133,6 +136,8 @@
 import ProbabilityDisplay from './ProbabilityDisplay.vue'
 import FileInfoDisplay from './FileInfoDisplay.vue'
 import {RESULT_CLASSES} from '@/config/models'
+import {SITE, SITE3, SITE5} from "../config/settings";
+import {ScientificNotation} from '@sctg/scientific-notation';
 
 export default {
   name: 'ResultDisplay',
@@ -154,6 +159,7 @@ export default {
   },
   data() {
     return {
+      isVibrationSite: SITE === SITE3,
       vibrationActive: false // 标记是否正在执行 5s 震动，防止重复触发
     }
   },
@@ -176,6 +182,9 @@ export default {
   watch: {
     isAlarm: {
       handler(newVal) {
+        if (!this.isVibrationSite) {
+          return
+        }
         // 只有当 isAlarm 从无变为有（字符串）时，触发一次 5s 震动
         if (newVal && !this.vibrationActive) {
           this.triggerFiveSecondVibration();
@@ -203,6 +212,22 @@ export default {
         // this.vibrationActive = false;
       }, 3000);
     },
+    formatConcentration(concentration) {
+      // 如果是有效的数字
+      if (typeof concentration === 'number' && isFinite(concentration)) {
+        if (SITE === SITE5) {
+          console.log(concentration)
+          const htmlRes = ScientificNotation.toScientificNotationHTML(concentration, 6)
+          console.log(htmlRes)
+          return htmlRes
+        } else {
+          // 普通小数，保留6位
+          return concentration.toFixed(6);
+        }
+      }
+      // 非数字（如字符串）原样返回，null/undefined 转为空字符串
+      return concentration ?? '';
+    }
   }
 }
 </script>

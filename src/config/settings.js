@@ -4,10 +4,12 @@ const baseUrl = 'http://43.138.48.175/npj'
 export const SITE1 = 'LipoSERS' // AppID __UNI__54BAF0B
 export const SITE2 = 'DNAnalyst'
 export const SITE3 = 'GZB'
+export const SITE4 = 'BioSERS Analyzer'
+export const SITE5 = 'AgriSERS Trace'
 
 
 // export const SITE = SITE1
-export const SITE = SITE3
+export const SITE = SITE5
 
 export default {
     baseUrl

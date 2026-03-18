@@ -167,7 +167,21 @@ export default {
         'Acetone': 'Acetone',
         'Formaldehyde': 'Formaldehyde',
         'Styrene': 'Styrene',
-        'Xylene': 'Xylene'
+        'Xylene': 'Xylene',
+
+        // SITE4
+        'CR': 'CR',
+        'CRP': 'CRP',
+        'IL-6': 'IL-6',
+        'LA': 'LA',
+        'PCT': 'PCT',
+        'UA': 'UA',
+        // SITE5
+        'ACE': 'Acephate',
+        'DM': 'Dimethoate',
+        'DQ': 'Diquat',
+        'TBZ': 'Thiabendazole',
+        'Thiram': 'Thiram'
     },
 
     fileInfo: {
@@ -291,7 +305,18 @@ export default {
             "hu_vd": "Carotene and VD Mix",
             "hu_vd_vk": "Carotene, VD and VK Mix",
             "hu_vk": "Carotene and VK Mix",
-            "vk_r_vd": "Retinol, VK and VD Mix"
+            "vk_r_vd": "Retinol, VK and VD Mix",
+            "han": "Sweat",
+            "lei": "Tear",
+            "niao": "Urine",
+            "shui": "Water",
+            "xueqing": "Serum",
+            'crp': 'C-Reactive Protein',
+            'il': 'Interleukin',
+            'ua': 'Uric Acid',
+            'pesticide': 'Pesticide',
+            'sjl':'Thiabendazole',
+            'fms':'Thiram',
         }
     }
 }
