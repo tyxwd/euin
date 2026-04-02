@@ -1,5 +1,4 @@
-import {SITE1, SITE2, SITE3, SITE4, SITE5, SITE} from "@/config/settings";
-
+import {SITE1, SITE2, SITE3, SITE4, SITE5, SITE6, SITE} from "@/config/settings";
 
 // 语言配置
 export const languageConfig = {
@@ -38,6 +37,10 @@ export const SVM_MODEL_CONFIGS = (() => {
         case SITE5:
             return {
                 'pesticide': {name: 'PESTICIDE模型'},
+            };
+        case SITE6:
+            return {
+                'osteoporosis': {name: 'Osteoporosis模型'},
             };
         default:
             return {'default': {name: '未知模型'}};
@@ -78,6 +81,77 @@ export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
     }
 })();
 
+// 计算方法类型配置
+export const CALCULATION_TYPES = (() => {
+    switch (SITE) {
+        case SITE1:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'},
+                {value: 'tree', label: 'method.type.tree'}
+            ];
+        case SITE2:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'}
+            ]
+        case SITE3:
+            return [
+                {value: 'svm', label: 'method.type.svm'}
+            ]
+        case SITE4:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'}
+            ]
+        case SITE5:
+            return [
+                {value: 'svm', label: 'method.type.svm'},
+                {value: 'quantitative', label: 'method.type.quantitative'}
+            ]
+        case SITE6:
+            return [
+                {value: 'svm', label: 'method.type.svm'}
+            ]
+    }
+})();
+// 类别名称映射配置
+export const CLASS_NAME_MAPPINGS = {
+    'VitaminD3': 'probability.vitaminD3',
+    'VitaminK3': 'probability.vitaminK3',
+    'retinol': 'probability.retinol',
+    'β-carotene': 'probability.betaCarotene',
+    'BRCA1-MT': 'probability.BRCA1-MT',
+    'BRCA1-MT-S': 'probability.BRCA1-MT-S',
+    'BRCA1-WT': 'probability.BRCA1-WT',
+    'BRCA1-WT-S': 'probability.BRCA1-WT-S',
+    '10:01': 'probability.10:01',
+    '5:01': 'probability.5:01',
+    '1:01': 'probability.1:01',
+    '1:05': 'probability.1:05',
+    '1:10': 'probability.1:10',
+    'HPV16 Clinical Sample': 'probability.HPV16 Clinical Sample',
+    'HPV18 Clinical Sample': 'probability.HPV18 Clinical Sample',
+    'Acetone': 'probability.Acetone',
+    'Formaldehyde': 'probability.Formaldehyde',
+    'Styrene': 'probability.Styrene',
+    'Xylene': 'probability.Xylene',
+    'CR': 'probability.CR',
+    'CRP': 'probability.CRP',
+    'IL-6': 'probability.IL-6',
+    'LA': 'probability.LA',
+    'PCT': 'probability.PCT',
+    'UA': 'probability.UA',
+    'ACE': 'probability.ACE',
+    'DM': 'probability.DM',
+    'DQ': 'probability.DQ',
+    'TBZ': 'probability.TBZ',
+    'Thiram': 'probability.Thiram',
+    'Normal': 'probability.Normal',
+    'Osteopenia': 'probability.Osteopenia',
+    'Osteoporosis': 'probability.Osteoporosis',
+}
+
 // 决策树模型配置
 export const TREE_MODEL_CONFIGS = {
     "hu_r": {name: "胡萝卜素和视黄醇混合"},
@@ -115,70 +189,6 @@ export const EXTENDED_COLORS = [
     '#FF8E53', '#9C88FF', '#FFC75F', '#FF6B9D',
     '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
 ]
-
-// 计算方法类型配置
-export const CALCULATION_TYPES = (() => {
-    switch (SITE) {
-        case SITE1:
-            return [
-                {value: 'svm', label: 'method.type.svm'},
-                {value: 'quantitative', label: 'method.type.quantitative'},
-                {value: 'tree', label: 'method.type.tree'}
-            ];
-        case SITE2:
-            return [
-                {value: 'svm', label: 'method.type.svm'},
-                {value: 'quantitative', label: 'method.type.quantitative'}
-            ]
-        case SITE3:
-            return [
-                {value: 'svm', label: 'method.type.svm'}
-            ]
-        case SITE4:
-            return [
-                {value: 'svm', label: 'method.type.svm'},
-                {value: 'quantitative', label: 'method.type.quantitative'}
-            ]
-        case SITE5:
-            return [
-                {value: 'svm', label: 'method.type.svm'},
-                {value: 'quantitative', label: 'method.type.quantitative'}
-            ]
-    }
-})();
-// 类别名称映射配置
-export const CLASS_NAME_MAPPINGS = {
-    'VitaminD3': 'probability.vitaminD3',
-    'VitaminK3': 'probability.vitaminK3',
-    'retinol': 'probability.retinol',
-    'β-carotene': 'probability.betaCarotene',
-    'BRCA1-MT': 'probability.BRCA1-MT',
-    'BRCA1-MT-S': 'probability.BRCA1-MT-S',
-    'BRCA1-WT': 'probability.BRCA1-WT',
-    'BRCA1-WT-S': 'probability.BRCA1-WT-S',
-    '10:01': 'probability.10:01',
-    '5:01': 'probability.5:01',
-    '1:01': 'probability.1:01',
-    '1:05': 'probability.1:05',
-    '1:10': 'probability.1:10',
-    'HPV16 Clinical Sample': 'probability.HPV16 Clinical Sample',
-    'HPV18 Clinical Sample': 'probability.HPV18 Clinical Sample',
-    'Acetone': 'probability.Acetone',
-    'Formaldehyde': 'probability.Formaldehyde',
-    'Styrene': 'probability.Styrene',
-    'Xylene': 'probability.Xylene',
-    'CR': 'probability.CR',
-    'CRP': 'probability.CRP',
-    'IL-6': 'probability.IL-6',
-    'LA': 'probability.LA',
-    'PCT': 'probability.PCT',
-    'UA': 'probability.UA',
-    'ACE': 'probability.ACE',
-    'DM': 'probability.DM',
-    'DQ': 'probability.DQ',
-    'TBZ': 'probability.TBZ',
-    'Thiram': 'probability.Thiram'
-}
 
 // 结果类别映射
 export const RESULT_CLASSES = {

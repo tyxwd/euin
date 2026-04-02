@@ -182,7 +182,11 @@ export default {
         'DM': '乐果',
         'DQ': '敌草快',
         'TBZ': '噻菌灵',
-        'Thiram': '福美双'
+        'Thiram': '福美双',
+        // SITE5
+        'Normal': '正常',
+        'Osteopenia': '骨量减少',
+        'Osteoporosis': '骨质疏松症',
     },
 
     fileInfo: {
@@ -316,8 +320,9 @@ export default {
             'il': '白细胞介素',
             'ua': '尿酸',
             'pesticide': '农药',
-            'sjl':'噻菌灵',
-            'fms':'福美双',
+            'sjl': '噻菌灵',
+            'fms': '福美双',
+            osteoporosis: '骨质疏松',
         }
     }
 }

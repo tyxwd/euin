@@ -181,7 +181,11 @@ export default {
         'DM': 'Dimethoate',
         'DQ': 'Diquat',
         'TBZ': 'Thiabendazole',
-        'Thiram': 'Thiram'
+        'Thiram': 'Thiram',
+        // SITE6
+        'Normal': 'Normal',
+        'Osteopenia': 'Osteopenia',
+        'Osteoporosis': 'Osteoporosis',
     },
 
     fileInfo: {
@@ -315,8 +319,9 @@ export default {
             'il': 'Interleukin',
             'ua': 'Uric Acid',
             'pesticide': 'Pesticide',
-            'sjl':'Thiabendazole',
-            'fms':'Thiram',
+            'sjl': 'Thiabendazole',
+            'fms': 'Thiram',
+            osteoporosis: 'Osteoporosis'
         }
     }
 }
