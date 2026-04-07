@@ -7,10 +7,11 @@ export const SITE3 = 'GZB'
 export const SITE4 = 'BioSERS Analyzer'
 export const SITE5 = 'AgriSERS Trace'
 export const SITE6 = 'Osteoporosis'
+export const SITE7 = 'Au2@P-AgNWs'
 
 
 // export const SITE = SITE1
-export const SITE = SITE6
+export const SITE = SITE7
 
 export default {
     baseUrl

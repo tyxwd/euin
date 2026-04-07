@@ -216,9 +216,7 @@ export default {
       // 如果是有效的数字
       if (typeof concentration === 'number' && isFinite(concentration)) {
         if (SITE === SITE5) {
-          console.log(concentration)
           const htmlRes = ScientificNotation.toScientificNotationHTML(concentration, 6)
-          console.log(htmlRes)
           return htmlRes
         } else {
           // 普通小数，保留6位
