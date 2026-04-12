@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { SVM_MODEL_CONFIGS, QUANTITATIVE_COMPOUND_CONFIGS, TREE_MODEL_CONFIGS, CALCULATION_TYPES } from '@/config/models'
+import { getCalculationTypes, getModelConfigMap } from '@/config/models'
 
 export default {
   name: 'FileInfoDisplay',
@@ -43,7 +43,7 @@ export default {
 
     getTypeLabel(type) {
       if (!type) return ''
-      const item = CALCULATION_TYPES.find(item => item.value === type)
+      const item = getCalculationTypes().find(item => item.value === type)
       return item ? this.$t(item.label) || type : type
     },
 
@@ -51,14 +51,15 @@ export default {
       if (!model) return '';
 
       const currentType = this.result?.calc_method;
+      const modelConfigMap = getModelConfigMap(currentType)
 
       switch (currentType) {
         case 'svm':
-          return this.$t(`method.model.${model}`) || SVM_MODEL_CONFIGS[model]?.name || model;
+          return this.$t(`method.model.${model}`) || modelConfigMap[model]?.name || model;
         case 'quantitative':
-          return this.$t(`method.model.${model}`) || QUANTITATIVE_COMPOUND_CONFIGS[model]?.name || model;
+          return this.$t(`method.model.${model}`) || modelConfigMap[model]?.name || model;
         case 'tree':
-          return this.$t(`method.model.${model}`) || TREE_MODEL_CONFIGS[model]?.name || model;
+          return this.$t(`method.model.${model}`) || modelConfigMap[model]?.name || model;
         default:
           return model;
       }

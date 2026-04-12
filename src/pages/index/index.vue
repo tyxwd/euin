@@ -148,9 +148,9 @@ export default {
       return this.hasResult && this.result.calc_method === 'quantitative'
     }
   },
-  onLoad() {
+  async onLoad() {
     this.initLanguage()
-    this.updateModelOptions(this.selectedType)
+    await this.refreshModelConfigs()
   },
   watch: {
     '$i18n.locale': {

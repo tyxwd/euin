@@ -1,4 +1,6 @@
 import { createI18n } from 'vue-i18n'
+import Settings from '@/config/settings'
+import { updateClassNameMappings } from '@/config/models'
 
 // 1. 导入所有语言文件（按 locales 文件夹路径导入）
 import en from './en'       // 英语
@@ -36,5 +38,68 @@ const i18n = createI18n({
     hi: hi
   }
 })
+
+let backendLangConfigPromise = null
+
+const mergeLocaleMessages = (locale, localeConfig) => {
+  const currentMessages = i18n.global.getLocaleMessage(locale) || {}
+  const currentMethod = currentMessages.method || {}
+  const currentModel = currentMethod.model || {}
+  const currentProbability = currentMessages.probability || {}
+
+  // 兼容两种后端结构：
+  // 1) 新结构: { model: {...}, probability: {...} }
+  // 2) 旧结构: { key: value, ... }（仅模型翻译）
+  const hasStructuredSections = !!(
+    localeConfig &&
+    typeof localeConfig === 'object' &&
+    ('model' in localeConfig || 'probability' in localeConfig)
+  )
+  const modelMessages = hasStructuredSections ? (localeConfig?.model || {}) : (localeConfig || {})
+  const probabilityMessages = hasStructuredSections ? (localeConfig?.probability || {}) : {}
+
+  i18n.global.setLocaleMessage(locale, {
+    ...currentMessages,
+    probability: {
+      ...currentProbability,
+      ...(probabilityMessages || {})
+    },
+    method: {
+      ...currentMethod,
+      model: {
+        ...currentModel,
+        ...(modelMessages || {})
+      }
+    }
+  })
+}
+
+export const loadBackendLangConfig = (force = false) => {
+  if (backendLangConfigPromise && !force) {
+    return backendLangConfigPromise
+  }
+
+  backendLangConfigPromise = new Promise((resolve) => {
+    uni.request({
+      url: `${Settings.baseUrl}/init_lang_config`,
+      method: 'GET',
+      success: (res) => {
+        const payload = res?.data || {}
+        if (payload.status === 'ok' && payload.data) {
+          Object.entries(payload.data).forEach(([locale, localeConfig]) => {
+            mergeLocaleMessages(locale, localeConfig)
+          })
+          updateClassNameMappings(payload.data)
+        }
+        resolve(payload)
+      },
+      fail: () => {
+        resolve(null)
+      }
+    })
+  })
+
+  return backendLangConfigPromise
+}
 
 export default i18n

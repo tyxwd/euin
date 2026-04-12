@@ -104,7 +104,9 @@ export default {
         const percentage = (probability * 100).toFixed(2)
         const angle = (probability * 360).toFixed(0)
 
-        const displayName = this.$t(CLASS_NAME_MAPPINGS[categoryKey]) || categoryKey
+        const i18nKey = CLASS_NAME_MAPPINGS[categoryKey] || `probability.${categoryKey}`
+        const translated = this.$t(i18nKey)
+        const displayName = translated === i18nKey ? categoryKey : translated
         const color = FOUR_CATEGORY_COLORS[categoryKey] || EXTENDED_COLORS[index % EXTENDED_COLORS.length]
 
         categories.push({
@@ -159,7 +161,9 @@ export default {
 
     formatClassName(className) {
       const name = className.replace('prob_', '')
-      return this.$t(CLASS_NAME_MAPPINGS[name]) || name
+      const i18nKey = CLASS_NAME_MAPPINGS[name] || `probability.${name}`
+      const translated = this.$t(i18nKey)
+      return translated === i18nKey ? name : translated
     },
 
     getColor(className) {

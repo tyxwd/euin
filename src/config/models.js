@@ -1,4 +1,5 @@
-import {
+import { reactive } from 'vue'
+import Settings, {
     SITE1,
     SITE2,
     SITE3,
@@ -64,8 +65,41 @@ export const SVM_MODEL_CONFIGS = (() => {
     }
 })();
 
-// 定量计算模型配置
-export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
+const CALCULATION_TYPE_FALLBACKS = {
+    [SITE1]: [
+        {value: "svm", label: "method.type.svm"},
+        {value: "quantitative", label: "method.type.quantitative"},
+        {value: "tree", label: "method.type.tree"},
+    ],
+    [SITE2]: [
+        {value: "svm", label: "method.type.svm"},
+        {value: "quantitative", label: "method.type.quantitative"},
+    ],
+    [SITE3]: [{value: "svm", label: "method.type.svm"}],
+    [SITE4]: [
+        {value: "svm", label: "method.type.svm"},
+        {value: "quantitative", label: "method.type.quantitative"},
+    ],
+    [SITE5]: [
+        {value: "svm", label: "method.type.svm"},
+        {value: "quantitative", label: "method.type.quantitative"},
+    ],
+    [SITE6]: [{value: "svm", label: "method.type.svm"}],
+    [SITE7]: [
+        {value: "svm", label: "method.type.svm"},
+        {value: "quantitative", label: "method.type.quantitative"},
+    ],
+}
+
+const TREE_MODEL_CONFIGS_FALLBACK = {
+    hu_r: {name: "胡萝卜素和视黄醇混合"},
+    hu_vd: {name: "胡萝卜素和VD混合"},
+    hu_vd_vk: {name: "胡萝卜素和VD、VK混合"},
+    hu_vk: {name: "胡萝卜素和VK混合"},
+    vk_r_vd: {name: "视黄醇和VK、VD混合"},
+}
+
+const QUANTITATIVE_COMPOUND_CONFIGS_FALLBACK = (() => {
     switch (SITE) {
         case SITE1:
             return {
@@ -107,7 +141,10 @@ export const QUANTITATIVE_COMPOUND_CONFIGS = (() => {
         default:
             return {};
     }
-})();
+})()
+
+// 定量计算模型配置
+export const QUANTITATIVE_COMPOUND_CONFIGS = QUANTITATIVE_COMPOUND_CONFIGS_FALLBACK;
 
 // 计算方法类型配置
 export const CALCULATION_TYPES = (() => {
@@ -144,8 +181,94 @@ export const CALCULATION_TYPES = (() => {
             ];
     }
 })();
-// 类别名称映射配置
-export const CLASS_NAME_MAPPINGS = {
+
+const createFallbackConfig = () => ({
+    svm_model_configs: SVM_MODEL_CONFIGS,
+    quantitative_compound_configs: QUANTITATIVE_COMPOUND_CONFIGS_FALLBACK,
+    tree_model_configs: TREE_MODEL_CONFIGS_FALLBACK,
+    calculation_types: CALCULATION_TYPES,
+})
+
+export const siteRuntimeModelConfig = reactive({
+    loading: false,
+    loaded: false,
+    site: SITE,
+    error: '',
+    svm_model_configs: SVM_MODEL_CONFIGS,
+    quantitative_compound_configs: QUANTITATIVE_COMPOUND_CONFIGS_FALLBACK,
+    tree_model_configs: TREE_MODEL_CONFIGS_FALLBACK,
+    calculation_types: CALCULATION_TYPE_FALLBACKS[SITE] || [],
+})
+
+const applyModelConfig = (config, site) => {
+    const fallback = createFallbackConfig()
+    siteRuntimeModelConfig.site = site || SITE
+    siteRuntimeModelConfig.svm_model_configs = config?.svm_model_configs || fallback.svm_model_configs
+    siteRuntimeModelConfig.quantitative_compound_configs = config?.quantitative_compound_configs || fallback.quantitative_compound_configs
+    siteRuntimeModelConfig.tree_model_configs = config?.tree_model_configs || fallback.tree_model_configs
+    siteRuntimeModelConfig.calculation_types = Array.isArray(config?.calculation_types) && config.calculation_types.length
+        ? config.calculation_types
+        : fallback.calculation_types
+    siteRuntimeModelConfig.loaded = true
+}
+
+export const getModelConfigMap = (type) => {
+    switch (type) {
+        case 'svm':
+            return siteRuntimeModelConfig.svm_model_configs || SVM_MODEL_CONFIGS
+        case 'quantitative':
+            return siteRuntimeModelConfig.quantitative_compound_configs || QUANTITATIVE_COMPOUND_CONFIGS
+        case 'tree':
+            return siteRuntimeModelConfig.tree_model_configs || TREE_MODEL_CONFIGS
+        default:
+            return {}
+    }
+}
+
+export const getCalculationTypes = () => {
+    return siteRuntimeModelConfig.calculation_types?.length
+        ? siteRuntimeModelConfig.calculation_types
+        : CALCULATION_TYPE_FALLBACKS[SITE] || []
+}
+
+export const loadSiteRuntimeModelConfig = (site = SITE, options = {}) => {
+    const { force = false } = options
+
+    if (!force && siteRuntimeModelConfig.loaded && siteRuntimeModelConfig.site === site) {
+        return Promise.resolve(siteRuntimeModelConfig)
+    }
+
+    siteRuntimeModelConfig.loading = true
+    siteRuntimeModelConfig.error = ''
+
+    return new Promise((resolve) => {
+        uni.request({
+            url: `${Settings.baseUrl}/available_models`,
+            method: 'POST',
+            data: { site },
+            header: { 'Content-Type': 'application/json' },
+            success: (res) => {
+                const payload = res?.data || {}
+                if (payload.status === 'ok' && payload.data) {
+                    applyModelConfig(payload.data, site)
+                } else {
+                    siteRuntimeModelConfig.error = payload.message || '获取站点配置失败'
+                    applyModelConfig(null, site)
+                }
+                resolve(siteRuntimeModelConfig)
+            },
+            fail: () => {
+                siteRuntimeModelConfig.error = '获取站点配置失败'
+                applyModelConfig(null, site)
+                resolve(siteRuntimeModelConfig)
+            },
+            complete: () => {
+                siteRuntimeModelConfig.loading = false
+            }
+        })
+    })
+}
+const DEFAULT_CLASS_NAME_MAPPINGS = {
     VitaminD3: "probability.vitaminD3",
     VitaminK3: "probability.vitaminK3",
     retinol: "probability.retinol",
@@ -194,16 +317,50 @@ export const CLASS_NAME_MAPPINGS = {
     "4_2_4": "probability.4_2_4",
     "4_4_2": "probability.4_4_2",
     "6_2_2": "probability.6_2_2",
-};
+}
+
+// 类别名称映射配置（支持后端语言配置动态更新）
+export const CLASS_NAME_MAPPINGS = reactive({...DEFAULT_CLASS_NAME_MAPPINGS})
+
+const buildClassNameMappingsFromLangPayload = (langPayload = {}) => {
+    const dynamicMappings = {...DEFAULT_CLASS_NAME_MAPPINGS}
+
+    Object.values(langPayload || {}).forEach((localeConfig) => {
+        const probabilityConfig = localeConfig?.probability
+        if (!probabilityConfig || typeof probabilityConfig !== 'object') {
+            return
+        }
+
+        Object.keys(probabilityConfig).forEach((key) => {
+            if (!key || key === 'title') {
+                return
+            }
+            dynamicMappings[key] = `probability.${key}`
+        })
+    })
+
+    // 历史兼容：后端常用 betaCarotene，老数据可能仍是 β-carotene
+    if (dynamicMappings.betaCarotene && !dynamicMappings['β-carotene']) {
+        dynamicMappings['β-carotene'] = dynamicMappings.betaCarotene
+    }
+
+    return dynamicMappings
+}
+
+export const updateClassNameMappings = (langPayload = {}) => {
+    const nextMappings = buildClassNameMappingsFromLangPayload(langPayload)
+
+    Object.keys(CLASS_NAME_MAPPINGS).forEach((key) => {
+        if (!(key in nextMappings)) {
+            delete CLASS_NAME_MAPPINGS[key]
+        }
+    })
+
+    Object.assign(CLASS_NAME_MAPPINGS, nextMappings)
+}
 
 // 决策树模型配置
-export const TREE_MODEL_CONFIGS = {
-    hu_r: {name: "胡萝卜素和视黄醇混合"},
-    hu_vd: {name: "胡萝卜素和VD混合"},
-    hu_vd_vk: {name: "胡萝卜素和VD、VK混合"},
-    hu_vk: {name: "胡萝卜素和VK混合"},
-    vk_r_vd: {name: "视黄醇和VK、VD混合"},
-};
+export const TREE_MODEL_CONFIGS = TREE_MODEL_CONFIGS_FALLBACK;
 
 // 四分类颜色配置
 export const FOUR_CATEGORY_COLORS = {
